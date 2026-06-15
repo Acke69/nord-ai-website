@@ -507,7 +507,7 @@
   .faq-list { display: flex; flex-direction: column; }
   .faq-item {
     border-top: 1px solid var(--border-light);
-    overflow: hidden;
+    overflow: clip;
   }
   .section-dark .faq-item { border-color: var(--border); }
   .faq-item:last-child { border-bottom: 1px solid var(--border-light); }
@@ -567,7 +567,11 @@
     gap: 80px;
     align-items: start;
   }
-  .two-col-sticky { position: sticky; top: 120px; }
+  .two-col-sticky {
+    position: sticky;
+    top: 120px;
+    align-self: start;
+  }
 
   /* CONTACT / CTA section */
   .contact-section {
