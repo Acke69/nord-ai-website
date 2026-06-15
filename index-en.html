@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NORD.AI — Web Intelligence Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=Space+Mono:wght@400&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #080808;
+    --off-white: #F4F3EF;
+    --warm-grey: #E9E7E1;
+    --mid-grey: #B0ADA6;
+    --dark-card: #111110;
+    --border: rgba(255,255,255,0.08);
+    --border-light: rgba(0,0,0,0.08);
+    --text-dim: rgba(255,255,255,0.45);
+    --text-dim-dark: rgba(0,0,0,0.45);
+    --accent: #D4D0C8;
+    --radius: 10px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--black);
+    color: #fff;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    position: fixed;
+    width: 8px; height: 8px;
+    background: #fff;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.1s ease;
+    mix-blend-mode: difference;
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 36px; height: 36px;
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transition: transform 0.25s ease, width 0.2s, height 0.2s, border-color 0.2s;
+    mix-blend-mode: difference;
+  }
+  body:has(a:hover) .cursor-ring,
+  body:has(button:hover) .cursor-ring {
+    width: 56px; height: 56px;
+    border-color: rgba(255,255,255,0.7);
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 24px 48px;
+    background: linear-gradient(to bottom, rgba(8,8,8,0.95) 0%, transparent 100%);
+    backdrop-filter: blur(0px);
+  }
+  .nav-logo {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: #fff;
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--mid-grey); }
+  .nav-center {
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+    text-align: center;
+    line-height: 1.6;
+  }
+  .nav-right {
+    display: flex; gap: 12px; align-items: center;
+  }
+  .btn-outline {
+    padding: 9px 22px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: transparent;
+    color: #fff;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    border-radius: 100px;
+    cursor: none;
+    transition: background 0.2s, border-color 0.2s;
+    text-decoration: none;
+    display: inline-flex; align-items: center;
+  }
+  .btn-outline:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.4); }
+  .btn-solid {
+    padding: 9px 22px;
+    background: #fff;
+    color: var(--black);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    border-radius: 100px;
+    cursor: none;
+    transition: background 0.2s, transform 0.15s;
+    text-decoration: none;
+    display: inline-flex; align-items: center;
+  }
+  .btn-solid:hover { background: var(--warm-grey); transform: scale(1.03); }
+
+  /* HERO */
+  .hero {
+    position: relative;
+    height: 100vh;
+    min-height: 680px;
+    display: flex;
+    align-items: stretch;
+    overflow: hidden;
+    background: var(--black);
+  }
+
+  /* Reactive ring canvas */
+  #ring-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+
+  .hero-inner {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    width: 100%;
+    padding: 0 48px;
+    align-items: stretch;
+  }
+
+  .hero-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 140px 0 64px;
+    border-right: 1px solid var(--border);
+    padding-right: 48px;
+  }
+
+  .hero-left-label {
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .hero-services {
+    list-style: none;
+    display: flex; flex-direction: column;
+    gap: 0;
+  }
+  .hero-services li {
+    padding: 18px 0;
+    border-top: 1px solid var(--border);
+    font-size: 15px;
+    color: rgba(255,255,255,0.6);
+    font-weight: 300;
+    transition: color 0.2s;
+    cursor: none;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .hero-services li:last-child { border-bottom: 1px solid var(--border); }
+  .hero-services li::after {
+    content: '↗';
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.2s, transform 0.2s;
+    font-size: 12px;
+  }
+  .hero-services li:hover { color: #fff; }
+  .hero-services li:hover::after { opacity: 1; transform: translateX(0); }
+
+  .hero-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 140px 0 64px;
+    padding-left: 64px;
+  }
+
+  .hero-status {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px;
+    color: var(--text-dim);
+    font-family: 'Space Mono', monospace;
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #6EE7B7;
+    box-shadow: 0 0 8px #6EE7B7;
+    animation: pulse 2.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .hero-headline {
+    font-size: clamp(52px, 6vw, 88px);
+    font-weight: 500;
+    line-height: 1.0;
+    letter-spacing: -0.04em;
+    max-width: 700px;
+  }
+  .hero-headline em {
+    font-style: normal;
+    color: var(--mid-grey);
+  }
+
+  .hero-bottom {
+    display: flex; align-items: flex-end; justify-content: space-between;
+  }
+  .hero-cta-group {
+    display: flex; flex-direction: column; gap: 20px;
+  }
+  .hero-sub {
+    font-size: 13px;
+    color: var(--text-dim);
+    font-weight: 300;
+  }
+  .hero-cta {
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 14px 28px;
+    background: #fff;
+    color: var(--black);
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 100px;
+    text-decoration: none;
+    border: none;
+    cursor: none;
+    width: fit-content;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .hero-cta:hover { transform: scale(1.04); background: var(--warm-grey); }
+  .hero-cta-arrow {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--black);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+  }
+
+  .hero-counter {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.8;
+    text-align: right;
+  }
+  .hero-counter strong {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 28px;
+    font-weight: 300;
+    color: #fff;
+    display: block;
+    letter-spacing: -0.03em;
+  }
+
+  /* SECTION BASE */
+  section {
+    position: relative;
+  }
+
+  /* LIGHT SECTION */
+  .section-light {
+    background: var(--off-white);
+    color: var(--black);
+  }
+  .section-dark {
+    background: var(--black);
+    color: #fff;
+  }
+
+  .section-inner {
+    padding: 100px 48px;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  .section-eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim-dark);
+    margin-bottom: 56px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-eyebrow::before {
+    content: '';
+    width: 24px; height: 1px;
+    background: currentColor;
+    opacity: 0.4;
+  }
+  .section-dark .section-eyebrow { color: var(--text-dim); }
+
+  .section-title {
+    font-size: clamp(36px, 4vw, 58px);
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+    max-width: 700px;
+    margin-bottom: 64px;
+  }
+
+  /* BENTO GRID — Services */
+  .bento {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-auto-rows: auto;
+    gap: 12px;
+  }
+
+  .bento-card {
+    background: var(--warm-grey);
+    border-radius: var(--radius);
+    padding: 36px;
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s;
+    cursor: none;
+  }
+  .bento-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.08);
+  }
+  .section-dark .bento-card {
+    background: var(--dark-card);
+    border: 1px solid var(--border);
+  }
+  .section-dark .bento-card:hover {
+    box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+    border-color: rgba(255,255,255,0.14);
+  }
+
+  .card-span-4 { grid-column: span 4; }
+  .card-span-5 { grid-column: span 5; }
+  .card-span-6 { grid-column: span 6; }
+  .card-span-7 { grid-column: span 7; }
+  .card-span-8 { grid-column: span 8; }
+  .card-span-12 { grid-column: span 12; }
+
+  .card-icon {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    background: rgba(0,0,0,0.07);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    margin-bottom: 32px;
+  }
+  .section-dark .card-icon {
+    background: rgba(255,255,255,0.07);
+  }
+
+  .card-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim-dark);
+    letter-spacing: 0.08em;
+    margin-bottom: 20px;
+  }
+  .section-dark .card-num { color: var(--text-dim); }
+
+  .card-title {
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    margin-bottom: 14px;
+  }
+
+  .card-body {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-dim-dark);
+    font-weight: 300;
+  }
+  .section-dark .card-body { color: var(--text-dim); }
+
+  .card-tag {
+    display: inline-flex;
+    margin-top: 28px;
+    padding: 6px 14px;
+    background: rgba(0,0,0,0.06);
+    border-radius: 100px;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    font-family: 'Space Mono', monospace;
+    color: rgba(0,0,0,0.5);
+  }
+  .section-dark .card-tag {
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.4);
+  }
+
+  /* Large number card */
+  .card-big-num {
+    font-size: clamp(64px, 8vw, 100px);
+    font-weight: 300;
+    letter-spacing: -0.05em;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .card-big-label {
+    font-size: 13px;
+    color: var(--text-dim-dark);
+    font-weight: 300;
+  }
+  .section-dark .card-big-label { color: var(--text-dim); }
+
+  /* PROCESS — Horizontal scroll strip */
+  .process-strip {
+    padding: 0 48px 100px;
+  }
+  .process-track {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  .process-track::-webkit-scrollbar { display: none; }
+  .process-step {
+    flex: 0 0 280px;
+    background: var(--dark-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 36px 32px;
+  }
+  .process-step-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 32px;
+  }
+  .process-step-title {
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+  .process-step-body {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-dim);
+    font-weight: 300;
+  }
+
+  /* WORK section — horizontal ticker */
+  .ticker-wrap {
+    overflow: hidden;
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+    padding: 20px 0;
+  }
+  .section-dark .ticker-wrap {
+    border-color: var(--border);
+  }
+  .ticker {
+    display: flex;
+    gap: 64px;
+    animation: ticker 22s linear infinite;
+    width: max-content;
+  }
+  @keyframes ticker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .ticker-item {
+    font-size: 13px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.04em;
+    color: var(--text-dim-dark);
+    white-space: nowrap;
+    display: flex; align-items: center; gap: 20px;
+  }
+  .section-dark .ticker-item { color: var(--text-dim); }
+  .ticker-item::before { content: '◆'; font-size: 6px; }
+
+  /* INTERACTIVE FAQ */
+  .faq-list { display: flex; flex-direction: column; }
+  .faq-item {
+    border-top: 1px solid var(--border-light);
+    overflow: hidden;
+  }
+  .section-dark .faq-item { border-color: var(--border); }
+  .faq-item:last-child { border-bottom: 1px solid var(--border-light); }
+  .section-dark .faq-item:last-child { border-color: var(--border); }
+
+  .faq-q {
+    width: 100%;
+    background: none;
+    border: none;
+    cursor: none;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 28px 0;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    color: var(--black);
+    text-align: left;
+    transition: color 0.2s;
+  }
+  .section-dark .faq-q { color: #fff; }
+  .faq-q:hover { color: var(--mid-grey); }
+  .section-dark .faq-q:hover { color: var(--mid-grey); }
+
+  .faq-icon {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 1px solid currentColor;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    transition: transform 0.3s;
+    opacity: 0.4;
+  }
+  .faq-item.open .faq-icon { transform: rotate(45deg); opacity: 1; }
+
+  .faq-a {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.3s;
+  }
+  .faq-item.open .faq-a { max-height: 200px; }
+  .faq-a-inner {
+    padding-bottom: 28px;
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text-dim-dark);
+    max-width: 640px;
+    font-weight: 300;
+  }
+  .section-dark .faq-a-inner { color: var(--text-dim); }
+
+  /* TWO-COL layout */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: start;
+  }
+  .two-col-sticky { position: sticky; top: 120px; }
+
+  /* CONTACT / CTA section */
+  .contact-section {
+    background: var(--off-white);
+    color: var(--black);
+  }
+  .contact-inner {
+    padding: 120px 48px;
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 40px;
+  }
+  .contact-headline {
+    font-size: clamp(44px, 5.5vw, 80px);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.0;
+    max-width: 600px;
+  }
+  .contact-headline em { font-style: normal; color: var(--mid-grey); }
+  .contact-right {
+    display: flex; flex-direction: column; gap: 16px;
+    flex-shrink: 0;
+  }
+  .contact-email {
+    font-size: 14px;
+    font-family: 'Space Mono', monospace;
+    color: var(--text-dim-dark);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .contact-email:hover { color: var(--black); }
+
+  /* FOOTER */
+  footer {
+    background: var(--black);
+    padding: 48px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-top: 1px solid var(--border);
+  }
+  .footer-logo {
+    font-size: 16px; font-weight: 600;
+    letter-spacing: -0.02em;
+    color: rgba(255,255,255,0.6);
+  }
+  .footer-copy {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+  }
+  .footer-links {
+    display: flex; gap: 32px;
+  }
+  .footer-links a {
+    font-size: 12px;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: #fff; }
+
+  /* SCROLL FADE IN */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (max-width: 900px) {
+    nav { padding: 20px 24px; }
+    .nav-center { display: none; }
+    .hero-inner { grid-template-columns: 1fr; padding: 0 24px; }
+    .hero-left { display: none; }
+    .hero-right { padding: 120px 0 48px; }
+    .section-inner, .contact-inner { padding: 72px 24px; }
+    .two-col { grid-template-columns: 1fr; gap: 40px; }
+    .card-span-4, .card-span-5, .card-span-6, .card-span-7, .card-span-8 { grid-column: span 12; }
+    .contact-inner { flex-direction: column; align-items: flex-start; }
+    footer { flex-direction: column; gap: 24px; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">NORD<span>.AI</span></a>
+  <div class="nav-center">
+    Based in Stockholm<br>
+    Worldwide · <span id="nav-time">—</span>
+  </div>
+  <div class="nav-right">
+    <a href="#contact" class="btn-outline">Book a call</a>
+    <a href="#services" class="btn-solid">Our work ↗</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <canvas id="ring-canvas"></canvas>
+  <div class="hero-inner">
+    <div class="hero-left reveal">
+      <p class="hero-left-label">Our design approach</p>
+      <ul class="hero-services">
+        <li>AI-Powered Websites</li>
+        <li>Brand Systems</li>
+        <li>UX Strategy</li>
+        <li>Conversion Design</li>
+      </ul>
+    </div>
+    <div class="hero-right">
+      <div class="hero-status reveal">
+        <span class="status-dot"></span>
+        Open to new projects — Q3 2025
+      </div>
+      <h1 class="hero-headline reveal">
+        Intelligent<br>
+        <em>websites</em> that<br>
+        convert.
+      </h1>
+      <div class="hero-bottom reveal">
+        <div class="hero-cta-group">
+          <p class="hero-sub">Let's build something meaningful</p>
+          <a href="#contact" class="hero-cta">
+            Start a project
+            <span class="hero-cta-arrow">↗</span>
+          </a>
+        </div>
+        <div class="hero-counter">
+          <strong>48</strong>
+          projects<br>delivered
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-wrap section-light">
+  <div class="ticker">
+    <span class="ticker-item">Brand Identity</span>
+    <span class="ticker-item">AI Integration</span>
+    <span class="ticker-item">Web Design</span>
+    <span class="ticker-item">Motion Design</span>
+    <span class="ticker-item">Conversion Optimisation</span>
+    <span class="ticker-item">Design Systems</span>
+    <span class="ticker-item">Strategy</span>
+    <span class="ticker-item">Brand Identity</span>
+    <span class="ticker-item">AI Integration</span>
+    <span class="ticker-item">Web Design</span>
+    <span class="ticker-item">Motion Design</span>
+    <span class="ticker-item">Conversion Optimisation</span>
+    <span class="ticker-item">Design Systems</span>
+    <span class="ticker-item">Strategy</span>
+  </div>
+</div>
+
+<!-- SERVICES BENTO -->
+<section class="section-light" id="services">
+  <div class="section-inner">
+    <div class="section-eyebrow reveal">What we do</div>
+    <div class="section-title reveal">Built for scale.<br>Designed to feel human.</div>
+
+    <div class="bento">
+      <div class="bento-card card-span-8 reveal">
+        <div class="card-num">01</div>
+        <div class="card-title">AI-Powered Web Design</div>
+        <div class="card-body">We design and build websites that learn. From dynamic content personalisation to intelligent chatbots — your site works while you sleep. Every pixel is purposeful, every interaction earns its place.</div>
+        <span class="card-tag">CORE SERVICE</span>
+      </div>
+      <div class="bento-card card-span-4 reveal" style="display:flex;flex-direction:column;justify-content:space-between;">
+        <div class="card-big-num">3×</div>
+        <div>
+          <div class="card-big-label">Average conversion uplift<br>for our clients after launch</div>
+        </div>
+      </div>
+
+      <div class="bento-card card-span-4 reveal">
+        <div class="card-num">02</div>
+        <div class="card-title">Brand Systems</div>
+        <div class="card-body">Visual identity that scales across every surface — print, screen, motion. Built with tokens, documented for teams.</div>
+        <span class="card-tag">IDENTITY</span>
+      </div>
+      <div class="bento-card card-span-4 reveal">
+        <div class="card-num">03</div>
+        <div class="card-title">UX Strategy</div>
+        <div class="card-body">We map your user's journey before a single frame is designed. Clarity over cleverness, always.</div>
+        <span class="card-tag">RESEARCH</span>
+      </div>
+      <div class="bento-card card-span-4 reveal">
+        <div class="card-num">04</div>
+        <div class="card-title">Growth Design</div>
+        <div class="card-body">Landing pages, A/B frameworks, onboarding flows. Design that answers to metrics without losing its soul.</div>
+        <span class="card-tag">PERFORMANCE</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS — dark section -->
+<section class="section-dark">
+  <div class="section-inner" style="padding-bottom: 40px;">
+    <div class="section-eyebrow reveal">How we work</div>
+    <div class="section-title reveal">A process as clean<br>as the output.</div>
+  </div>
+  <div class="process-strip">
+    <div class="process-track">
+      <div class="process-step reveal">
+        <div class="process-step-num">Step 01</div>
+        <div class="process-step-title">Discovery</div>
+        <div class="process-step-body">One focused week. We immerse in your business, your users, your competitors. No templates, no assumptions.</div>
+      </div>
+      <div class="process-step reveal">
+        <div class="process-step-num">Step 02</div>
+        <div class="process-step-title">Direction</div>
+        <div class="process-step-body">We present two distinct creative directions. You choose — or we synthesise. No death by committee.</div>
+      </div>
+      <div class="process-step reveal">
+        <div class="process-step-num">Step 03</div>
+        <div class="process-step-title">Design</div>
+        <div class="process-step-body">Full fidelity mockups in Figma. Interactive prototypes. Every screen, every state, every edge case.</div>
+      </div>
+      <div class="process-step reveal">
+        <div class="process-step-num">Step 04</div>
+        <div class="process-step-title">Build</div>
+        <div class="process-step-body">We build in code or hand off to your team. Pixel-perfect, performant, and ready for production.</div>
+      </div>
+      <div class="process-step reveal">
+        <div class="process-step-num">Step 05</div>
+        <div class="process-step-title">Lansering & iteration</div>
+        <div class="process-step-body">Go live, measure, refine. We stay on as design partners for the first 30 days post-launch.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ — light section -->
+<section class="section-light" id="about">
+  <div class="section-inner">
+    <div class="two-col">
+      <div class="two-col-sticky">
+        <div class="section-eyebrow reveal">Questions</div>
+        <div class="section-title reveal" style="margin-bottom:0;">What you<br>want to know.</div>
+      </div>
+      <div>
+        <div class="faq-list reveal">
+          <div class="faq-item">
+            <button class="faq-q" onclick="toggleFaq(this)">
+              How long does a project take?
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-a">
+              <div class="faq-a-inner">Most projects run 6–10 weeks from kick-off to launch. We're deliberate but not slow — a tight timeline with the right decisions beats a long one with revisions.</div>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q" onclick="toggleFaq(this)">
+              Do you work with early-stage startups?
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-a">
+              <div class="faq-a-inner">Yes, and we love it. Some of our best work has been with founders who had a clear vision but no design team. We help you move fast without building technical debt.</div>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q" onclick="toggleFaq(this)">
+              What does AI-powered actually mean?
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-a">
+              <div class="faq-a-inner">It means your website adapts — to user behaviour, to context, to data. Think personalised landing pages, intelligent search, smart recommendations. Not gimmicks. Real functionality that earns ROI.</div>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q" onclick="toggleFaq(this)">
+              Can you work with our existing dev team?
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-a">
+              <div class="faq-a-inner">Absolutely. We produce design systems and component libraries built to hand off cleanly. Figma tokens, documentation, annotations — your engineers will thank you.</div>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-q" onclick="toggleFaq(this)">
+              What's your pricing model?
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-a">
+              <div class="faq-a-inner">Fixed-scope projects start at €12,000. We also offer monthly retainers for ongoing design partnerships. No hourly billing, no scope creep surprises.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS bento — dark -->
+<section class="section-dark">
+  <div class="section-inner">
+    <div class="section-eyebrow reveal">By the numbers</div>
+    <div class="bento">
+      <div class="bento-card card-span-4 reveal" style="display:flex;flex-direction:column;gap:8px;">
+        <div class="card-big-num">48</div>
+        <div class="card-big-label" style="color:var(--text-dim);">Projects shipped<br>since 2021</div>
+      </div>
+      <div class="bento-card card-span-4 reveal">
+        <div class="card-big-num">97%</div>
+        <div class="card-big-label" style="color:var(--text-dim);">Client retention<br>after first project</div>
+      </div>
+      <div class="bento-card card-span-4 reveal">
+        <div class="card-big-num">14</div>
+        <div class="card-big-label" style="color:var(--text-dim);">Industries served across<br>Europe and North America</div>
+      </div>
+      <div class="bento-card card-span-12 reveal" style="padding: 40px 48px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:40px;flex-wrap:wrap;">
+          <div style="font-size:clamp(20px,2.5vw,32px);font-weight:500;letter-spacing:-0.03em;max-width:500px;line-height:1.3;">
+            "Nord.AI redesigned our product from the ground up. Revenue per user up 40% in 60 days."
+          </div>
+          <div style="flex-shrink:0;">
+            <div style="font-size:13px;color:var(--text-dim);font-weight:300;">— Erik Lindström, CEO</div>
+            <div style="font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.25);margin-top:4px;letter-spacing:0.06em;">LINDR.IO · SaaS</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact-section" id="contact">
+  <div class="contact-inner">
+    <h2 class="contact-headline reveal">
+      Ready to build<br>
+      <em>something</em><br>
+      that lasts?
+    </h2>
+    <div class="contact-right reveal">
+      <a href="mailto:hello@nord.ai" class="contact-email">hello@nord.ai</a>
+      <a href="#" class="btn-solid" style="font-size:14px;padding:14px 32px;">Book a free call ↗</a>
+      <p style="font-size:11px;font-family:'Space Mono',monospace;color:var(--text-dim-dark);margin-top:4px;">Response within 24 hours</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">NORD.AI</div>
+  <div class="footer-copy">© 2025 Nord Intelligence AB · Stockholm</div>
+  <div class="footer-links">
+    <a href="#">Privacy</a>
+    <a href="#">Instagram</a>
+    <a href="#">LinkedIn</a>
+  </div>
+</footer>
+
+<script>
+// ── Cursor ──────────────────────────────────────────
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursor-ring');
+let mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.transform = `translate(${mx - 4}px, ${my - 4}px)`;
+});
+function animateRing() {
+  rx += (mx - rx - 18) * 0.12;
+  ry += (my - ry - 18) * 0.12;
+  ring.style.transform = `translate(${rx}px, ${ry}px)`;
+  requestAnimationFrame(animateRing);
+}
+animateRing();
+
+// ── Clock ──────────────────────────────────────────
+function updateTime() {
+  const t = new Date().toLocaleTimeString('en-SE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Stockholm' });
+  document.getElementById('nav-time').textContent = t;
+}
+updateTime();
+setInterval(updateTime, 10000);
+
+// ── Reactive Ring Canvas ───────────────────────────
+const canvas = document.getElementById('ring-canvas');
+const ctx = canvas.getContext('2d');
+let W, H, mouseX = 0.5, mouseY = 0.5;
+let targetX = 0.5, targetY = 0.5;
+let currentX = 0.5, currentY = 0.5;
+let tick = 0;
+
+function resize() {
+  W = canvas.width = canvas.offsetWidth;
+  H = canvas.height = canvas.offsetHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+document.addEventListener('mousemove', e => {
+  const hero = document.querySelector('.hero');
+  const r = hero.getBoundingClientRect();
+  targetX = (e.clientX - r.left) / r.width;
+  targetY = (e.clientY - r.top) / r.height;
+});
+
+function drawRing(cx, cy, radius, segments, width, alpha, rotation) {
+  const angleStep = (Math.PI * 2) / segments;
+  for (let i = 0; i < segments; i++) {
+    const a1 = rotation + i * angleStep;
+    const a2 = a1 + angleStep * 0.7;
+    const glow = 0.3 + 0.7 * Math.sin(tick * 0.012 + i * 0.4);
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, a1, a2);
+    ctx.strokeStyle = `rgba(255,255,255,${alpha * glow})`;
+    ctx.lineWidth = width;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+}
+
+function drawGlow(cx, cy, radius, alpha) {
+  const grad = ctx.createRadialGradient(cx, cy, radius * 0.7, cx, cy, radius * 1.3);
+  grad.addColorStop(0, `rgba(200,200,200,${alpha})`);
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius * 1.3, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+}
+
+function draw() {
+  tick++;
+  ctx.clearRect(0, 0, W, H);
+
+  currentX += (targetX - currentX) * 0.04;
+  currentY += (targetY - currentY) * 0.04;
+
+  // Parallax offsets per layer
+  const px = (currentX - 0.5);
+  const py = (currentY - 0.5);
+
+  // Base center — slightly right of center
+  const bx = W * 0.68;
+  const by = H * 0.5;
+
+  // Layer 1: outermost blurred ring — large, slow
+  const r1x = bx + px * 120;
+  const r1y = by + py * 60;
+  ctx.filter = 'blur(18px)';
+  drawGlow(r1x, r1y, H * 0.44, 0.04);
+  drawRing(r1x, r1y, H * 0.44, 48, 1.5, 0.06, tick * 0.0015);
+  ctx.filter = 'none';
+
+  // Layer 2: mid ring — crisp gear-like
+  const r2x = bx + px * 80;
+  const r2y = by + py * 45;
+  drawRing(r2x, r2y, H * 0.34, 36, 2, 0.14, -tick * 0.002);
+
+  // Layer 3: inner ring — faster rotation
+  const r3x = bx + px * 50;
+  const r3y = by + py * 30;
+  drawRing(r3x, r3y, H * 0.22, 24, 2.5, 0.22, tick * 0.004);
+
+  // Layer 4: innermost solid ring
+  const r4x = bx + px * 30;
+  const r4y = by + py * 20;
+  ctx.beginPath();
+  ctx.arc(r4x, r4y, H * 0.1, 0, Math.PI * 2);
+  ctx.strokeStyle = `rgba(255,255,255,0.08)`;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  drawRing(r4x, r4y, H * 0.1, 16, 3, 0.3, -tick * 0.006);
+
+  // Ambient glow orb that tracks mouse loosely
+  const ox = bx + px * 200;
+  const oy = by + py * 120;
+  const grd = ctx.createRadialGradient(ox, oy, 0, ox, oy, H * 0.5);
+  grd.addColorStop(0, `rgba(160,155,148,0.12)`);
+  grd.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, W, H);
+
+  requestAnimationFrame(draw);
+}
+draw();
+
+// ── Scroll reveal ──────────────────────────────────
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      // Stagger siblings
+      const siblings = [...e.target.parentElement.querySelectorAll('.reveal')];
+      const idx = siblings.indexOf(e.target);
+      e.target.style.transitionDelay = `${idx * 60}ms`;
+      e.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1 });
+reveals.forEach(el => observer.observe(el));
+
+// ── FAQ toggle ──────────────────────────────────────
+function toggleFaq(btn) {
+  const item = btn.closest('.faq-item');
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+</script>
+</body>
+</html>
