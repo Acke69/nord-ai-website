@@ -31,8 +31,11 @@
     font-family: 'Space Grotesk', sans-serif;
     background: var(--black);
     color: #fff;
-    overflow-x: hidden;
     cursor: none;
+  }
+
+  .page-wrap {
+    overflow-x: hidden;
   }
 
   /* Custom cursor */
@@ -453,10 +456,11 @@
     padding: 36px 32px;
   }
   .process-step-num {
-    font-family: 'Space Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    color: var(--text-dim);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 28px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    color: #fff;
     margin-bottom: 32px;
   }
   .process-step-title {
@@ -504,7 +508,12 @@
   .ticker-item::before { content: '◆'; font-size: 6px; }
 
   /* INTERACTIVE FAQ */
-  .faq-list { display: flex; flex-direction: column; }
+  .faq-section {
+    overflow: visible;
+  }
+  .faq-section .section-inner {
+    overflow: visible;
+  }
   .faq-item {
     border-top: 1px solid var(--border-light);
     overflow: clip;
@@ -569,7 +578,7 @@
   }
   .two-col-sticky {
     position: sticky;
-    top: 120px;
+    top: 80px;
     align-self: start;
   }
 
@@ -722,6 +731,7 @@
 </head>
 <body>
 
+<div class="page-wrap">
 <div class="cursor" id="cursor"></div>
 <div class="cursor-ring" id="cursor-ring"></div>
 
@@ -885,7 +895,7 @@
 </section>
 
 <!-- FAQ — light section -->
-<section class="section-light" id="about">
+<section class="section-light faq-section" id="about">
   <div class="section-inner">
     <div class="two-col">
       <div class="two-col-sticky">
