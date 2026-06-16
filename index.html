@@ -1335,22 +1335,34 @@ setInterval(updateTime, 10000);
     let px = 0, py = 0;
     let mouseNX = 0, mouseNY = 0;
 
-    // Zoom state
-    const CAM_HOME      = new THREE.Vector3(0, 0, 4.2);
+    // Store the exact initial camera state to restore on zoom-out
+    // Camera looks slightly toward globe center (x:1.55) from (0,0,4.2)
+    camera.lookAt(GLOBE_X, 0, 0);
+    const CAM_HOME_POS  = camera.position.clone();       // (0, 0, 4.2)
+    const CAM_HOME_QUAT = camera.quaternion.clone();     // the exact look-at angle
     const GLOBE_HOME    = new THREE.Vector3(GLOBE_X, 0, 0);
-    let camFrom  = CAM_HOME.clone();
-    let camTo    = CAM_HOME.clone();
-    let camT     = 1;
-    let isZoomed = false;
 
-    function startZoom(to, resetGlobe) {
-      camFrom = camera.position.clone();
-      camTo   = to.clone();
-      camT    = 0;
-      if (resetGlobe) {
-        // Snap globe back to true home position before animating out
-        globe.position.copy(GLOBE_HOME);
-      }
+    // Zoom state
+    let camFromPos  = CAM_HOME_POS.clone();
+    let camFromQuat = CAM_HOME_QUAT.clone();
+    let camToPos    = CAM_HOME_POS.clone();
+    let camToQuat   = CAM_HOME_QUAT.clone();
+    let camT        = 1;
+    let isZoomed    = false;
+
+    function startZoomTo(toPos, toLookAt) {
+      camFromPos  = camera.position.clone();
+      camFromQuat = camera.quaternion.clone();
+      camToPos    = toPos.clone();
+      // Compute target quaternion by temporarily moving camera there
+      const savedPos  = camera.position.clone();
+      const savedQuat = camera.quaternion.clone();
+      camera.position.copy(toPos);
+      camera.lookAt(toLookAt);
+      camToQuat = camera.quaternion.clone();
+      camera.position.copy(savedPos);
+      camera.quaternion.copy(savedQuat);
+      camT = 0;
     }
 
     // ── Drag — slow, premium ──────────────────────────
@@ -1406,10 +1418,12 @@ setInterval(updateTime, 10000);
     // Prevent dblclick from triggering drag state
     canvas.addEventListener('dblclick', e => {
       e.preventDefault();
-      isDrag = false; // cancel any accidental drag state from the two clicks
+      isDrag = false;
 
       if (isZoomed) {
-        startZoom(CAM_HOME, true);
+        // Restore globe to exact home, then zoom camera back
+        globe.position.copy(GLOBE_HOME);
+        startZoomTo(CAM_HOME_POS, GLOBE_HOME);
         isZoomed = false;
         return;
       }
@@ -1418,14 +1432,11 @@ setInterval(updateTime, 10000);
       raycaster.setFromCamera(m2d, camera);
       const hits = raycaster.intersectObject(globeHitMesh, false);
       if (hits.length) {
-        // World-space globe center
         const globeWP = new THREE.Vector3();
         globe.getWorldPosition(globeWP);
-        // Direction from globe center → hit point on surface
-        const dir = hits[0].point.clone().sub(globeWP).normalize();
-        // Camera destination: 1.9 units along that direction from globe center
+        const dir  = hits[0].point.clone().sub(globeWP).normalize();
         const dest = globeWP.clone().add(dir.multiplyScalar(1.9));
-        startZoom(dest);
+        startZoomTo(dest, globeWP);
         isZoomed = true;
       }
     });
@@ -1477,14 +1488,18 @@ setInterval(updateTime, 10000);
         globe.position.y =           mouseNY * -0.015;
       }
 
-      // Cinematic zoom — cubic ease-out ~1.4s
+      // Cinematic zoom — cubic ease-out ~1.4s, slerp quaternion for exact camera angle
       if (camT < 1) {
         camT = Math.min(1, camT + 0.012);
         const ease = 1 - Math.pow(1 - camT, 3);
-        camera.position.lerpVectors(camFrom, camTo, ease);
-        camera.lookAt(isZoomed ? globe.position : GLOBE_HOME);
-        // When fully returned, restore globe to exact home
-        if (camT >= 1 && !isZoomed) globe.position.copy(GLOBE_HOME);
+        camera.position.lerpVectors(camFromPos, camToPos, ease);
+        THREE.Quaternion.slerp(camFromQuat, camToQuat, camera.quaternion, ease);
+        if (camT >= 1 && !isZoomed) {
+          // Guarantee exact home state
+          camera.position.copy(CAM_HOME_POS);
+          camera.quaternion.copy(CAM_HOME_QUAT);
+          globe.position.copy(GLOBE_HOME);
+        }
       }
 
       // City dots + pulse rings
