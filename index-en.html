@@ -436,24 +436,27 @@
   }
   .section-dark .card-big-label { color: var(--text-dim); }
 
-  /* PROCESS — Horizontal scroll strip */
+  /* PROCESS — Carousel */
   .process-strip {
     padding: 0 48px 100px;
+    position: relative;
+  }
+  .process-carousel {
+    position: relative;
   }
   .process-track {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(5, calc((100% - 48px) / 4));
     gap: 12px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-bottom: 4px;
+    overflow: hidden;
+    transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .process-track::-webkit-scrollbar { display: none; }
   .process-step {
-    flex: 0 0 280px;
     background: var(--dark-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 36px 32px;
+    min-width: 0;
   }
   .process-step-num {
     font-family: 'Space Grotesk', sans-serif;
@@ -474,6 +477,55 @@
     line-height: 1.7;
     color: var(--text-dim);
     font-weight: 300;
+  }
+  /* Arrow controls */
+  .process-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 32px;
+  }
+  .process-arrow {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.18);
+    background: transparent;
+    color: #fff;
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: none;
+    transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+    flex-shrink: 0;
+  }
+  .process-arrow:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.4); }
+  .process-arrow:disabled { opacity: 0.2; pointer-events: none; }
+  .process-dots {
+    display: flex; gap: 6px; align-items: center;
+    margin-left: 8px;
+  }
+  .process-dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    transition: background 0.2s, width 0.2s;
+  }
+  .process-dot.active {
+    background: #fff;
+    width: 16px;
+    border-radius: 2px;
+  }
+
+  /* Responsive: tablet = 3, mobile = 1 */
+  @media (max-width: 1024px) {
+    .process-track {
+      grid-template-columns: repeat(5, calc((100% - 24px) / 3));
+    }
+  }
+  @media (max-width: 600px) {
+    .process-strip { padding: 0 24px 72px; }
+    .process-track {
+      grid-template-columns: repeat(5, 100%);
+    }
   }
 
   /* WORK section — horizontal ticker */
@@ -864,31 +916,38 @@
     <div class="section-title reveal">A process as clean<br>as the output.</div>
   </div>
   <div class="process-strip">
-    <div class="process-track">
-      <div class="process-step reveal">
-        <div class="process-step-num">Step 01</div>
-        <div class="process-step-title">Discovery</div>
-        <div class="process-step-body">One focused week. We immerse in your business, your users, your competitors. No templates, no assumptions.</div>
+    <div class="process-carousel">
+      <div class="process-track" id="processTrack">
+        <div class="process-step">
+          <div class="process-step-num">Step 01</div>
+          <div class="process-step-title">Discovery</div>
+          <div class="process-step-body">One focused week. We immerse in your business, your users, your competitors. No templates, no assumptions.</div>
+        </div>
+        <div class="process-step">
+          <div class="process-step-num">Step 02</div>
+          <div class="process-step-title">Direction</div>
+          <div class="process-step-body">We present two distinct creative directions. You choose — or we synthesise. No death by committee.</div>
+        </div>
+        <div class="process-step">
+          <div class="process-step-num">Step 03</div>
+          <div class="process-step-title">Design</div>
+          <div class="process-step-body">Full fidelity mockups in Figma. Interactive prototypes. Every screen, every state, every edge case.</div>
+        </div>
+        <div class="process-step">
+          <div class="process-step-num">Step 04</div>
+          <div class="process-step-title">Build</div>
+          <div class="process-step-body">We build in code or hand off to your team. Pixel-perfect, performant, and ready for production.</div>
+        </div>
+        <div class="process-step">
+          <div class="process-step-num">Step 05</div>
+          <div class="process-step-title">Launch & Iterate</div>
+          <div class="process-step-body">Go live, measure, refine. We stay on as design partners for the first 30 days post-launch.</div>
+        </div>
       </div>
-      <div class="process-step reveal">
-        <div class="process-step-num">Step 02</div>
-        <div class="process-step-title">Direction</div>
-        <div class="process-step-body">We present two distinct creative directions. You choose — or we synthesise. No death by committee.</div>
-      </div>
-      <div class="process-step reveal">
-        <div class="process-step-num">Step 03</div>
-        <div class="process-step-title">Design</div>
-        <div class="process-step-body">Full fidelity mockups in Figma. Interactive prototypes. Every screen, every state, every edge case.</div>
-      </div>
-      <div class="process-step reveal">
-        <div class="process-step-num">Step 04</div>
-        <div class="process-step-title">Build</div>
-        <div class="process-step-body">We build in code or hand off to your team. Pixel-perfect, performant, and ready for production.</div>
-      </div>
-      <div class="process-step reveal">
-        <div class="process-step-num">Step 05</div>
-        <div class="process-step-title">Lansering & iteration</div>
-        <div class="process-step-body">Go live, measure, refine. We stay on as design partners for the first 30 days post-launch.</div>
+      <div class="process-controls">
+        <button class="process-arrow" id="procPrev" onclick="stepCarousel(-1)" disabled>←</button>
+        <button class="process-arrow" id="procNext" onclick="stepCarousel(1)">→</button>
+        <div class="process-dots" id="procDots"></div>
       </div>
     </div>
   </div>
@@ -1167,6 +1226,54 @@ const observer = new IntersectionObserver(entries => {
   });
 }, { threshold: 0.1 });
 reveals.forEach(el => observer.observe(el));
+
+// ── Process Carousel ────────────────────────────────
+(function() {
+  const track = document.getElementById('processTrack');
+  const prevBtn = document.getElementById('procPrev');
+  const nextBtn = document.getElementById('procNext');
+  const dotsWrap = document.getElementById('procDots');
+  const TOTAL = 5;
+  let current = 0;
+
+  function visible() {
+    const w = window.innerWidth;
+    if (w <= 600) return 1;
+    if (w <= 1024) return 3;
+    return 4;
+  }
+
+  function maxIndex() { return TOTAL - visible(); }
+
+  function buildDots() {
+    dotsWrap.innerHTML = '';
+    const steps = maxIndex() + 1;
+    for (let i = 0; i < steps; i++) {
+      const d = document.createElement('span');
+      d.className = 'process-dot' + (i === current ? ' active' : '');
+      d.onclick = () => goTo(i);
+      d.style.cursor = 'none';
+      dotsWrap.appendChild(d);
+    }
+  }
+
+  function goTo(idx) {
+    current = Math.max(0, Math.min(idx, maxIndex()));
+    const pct = (current / TOTAL) * 100;
+    track.style.transform = `translateX(-${pct}%)`;
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current >= maxIndex();
+    buildDots();
+  }
+
+  window.stepCarousel = (dir) => goTo(current + dir);
+
+  buildDots();
+  window.addEventListener('resize', () => {
+    current = Math.min(current, maxIndex());
+    goTo(current);
+  });
+})();
 
 // ── FAQ toggle ──────────────────────────────────────
 function toggleFaq(btn) {
