@@ -443,13 +443,14 @@
   }
   .process-carousel {
     position: relative;
+    overflow: hidden;
   }
   .process-track {
     display: grid;
-    grid-template-columns: repeat(5, calc((100% - 48px) / 4));
+    grid-template-columns: repeat(5, calc(25% - 9px));
     gap: 12px;
-    overflow: hidden;
     transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    width: calc(500% / 4);
   }
   .process-step {
     background: var(--dark-card);
@@ -515,16 +516,30 @@
     border-radius: 2px;
   }
 
+  .process-carousel {
+    position: relative;
+    overflow: hidden;
+  }
+  .process-track {
+    display: grid;
+    grid-template-columns: repeat(5, calc(25% - 9px));
+    gap: 12px;
+    transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    width: calc(500% / 4);
+  }
+
   /* Responsive: tablet = 3, mobile = 1 */
   @media (max-width: 1024px) {
     .process-track {
-      grid-template-columns: repeat(5, calc((100% - 24px) / 3));
+      grid-template-columns: repeat(5, calc(33.333% - 8px));
+      width: calc(500% / 3);
     }
   }
   @media (max-width: 600px) {
     .process-strip { padding: 0 24px 72px; }
     .process-track {
       grid-template-columns: repeat(5, 100%);
+      width: 500%;
     }
   }
 
@@ -1504,8 +1519,7 @@ reveals.forEach(el => observer.observe(el));
 
   function goTo(idx) {
     current = Math.max(0, Math.min(idx, maxIndex()));
-    const pct = (current / TOTAL) * 100;
-    track.style.transform = `translateX(-${pct}%)`;
+    track.style.transform = `translateX(-${current * (100 / TOTAL)}%)`;
     prevBtn.disabled = current === 0;
     nextBtn.disabled = current >= maxIndex();
     buildDots();
