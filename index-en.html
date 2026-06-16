@@ -1324,16 +1324,21 @@ setInterval(updateTime, 10000);
     let mouseNX = 0, mouseNY = 0;
 
     // Zoom state
-    const CAM_HOME = new THREE.Vector3(0, 0, 4.2);
+    const CAM_HOME      = new THREE.Vector3(0, 0, 4.2);
+    const GLOBE_HOME    = new THREE.Vector3(GLOBE_X, 0, 0);
     let camFrom  = CAM_HOME.clone();
     let camTo    = CAM_HOME.clone();
     let camT     = 1;
     let isZoomed = false;
 
-    function startZoom(to) {
+    function startZoom(to, resetGlobe) {
       camFrom = camera.position.clone();
       camTo   = to.clone();
       camT    = 0;
+      if (resetGlobe) {
+        // Snap globe back to true home position before animating out
+        globe.position.copy(GLOBE_HOME);
+      }
     }
 
     // ── Drag — slow, premium ──────────────────────────
@@ -1392,7 +1397,7 @@ setInterval(updateTime, 10000);
       isDrag = false; // cancel any accidental drag state from the two clicks
 
       if (isZoomed) {
-        startZoom(CAM_HOME);
+        startZoom(CAM_HOME, true);
         isZoomed = false;
         return;
       }
@@ -1454,8 +1459,8 @@ setInterval(updateTime, 10000);
       globe.rotation.x = rotX;
       globe.rotation.y = rotY;
 
-      // Subtle parallax position nudge on idle
-      if (!isDrag) {
+      // Subtle parallax position nudge — only when not zooming
+      if (!isDrag && camT >= 1) {
         globe.position.x = GLOBE_X + mouseNX * 0.018;
         globe.position.y =           mouseNY * -0.015;
       }
@@ -1465,7 +1470,9 @@ setInterval(updateTime, 10000);
         camT = Math.min(1, camT + 0.012);
         const ease = 1 - Math.pow(1 - camT, 3);
         camera.position.lerpVectors(camFrom, camTo, ease);
-        camera.lookAt(globe.position);
+        camera.lookAt(isZoomed ? globe.position : GLOBE_HOME);
+        // When fully returned, restore globe to exact home
+        if (camT >= 1 && !isZoomed) globe.position.copy(GLOBE_HOME);
       }
 
       // City dots + pulse rings
