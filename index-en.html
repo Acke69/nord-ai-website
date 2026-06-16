@@ -1372,9 +1372,10 @@ setInterval(updateTime, 10000);
     const m2d = new THREE.Vector2();
 
     // Build a sphere for hit-testing the whole globe surface
+    // NOTE: visible:false breaks raycasting in r128 — use transparent+opacity:0 instead
     const globeHitMesh = new THREE.Mesh(
       new THREE.SphereGeometry(R * 1.02, 32, 32),
-      new THREE.MeshBasicMaterial({ visible: false, side: THREE.FrontSide })
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, side: THREE.FrontSide, depthWrite: false })
     );
     globe.add(globeHitMesh);
 
@@ -1385,24 +1386,27 @@ setInterval(updateTime, 10000);
     }
 
     // ── Double-click zoom ─────────────────────────────
+    // Prevent dblclick from triggering drag state
     canvas.addEventListener('dblclick', e => {
+      e.preventDefault();
+      isDrag = false; // cancel any accidental drag state from the two clicks
+
       if (isZoomed) {
-        // Reset to home
         startZoom(CAM_HOME);
         isZoomed = false;
         return;
       }
-      // Raycast against the invisible globe sphere to get hit point
+
       toNDC(e.clientX, e.clientY);
       raycaster.setFromCamera(m2d, camera);
       const hits = raycaster.intersectObject(globeHitMesh, false);
       if (hits.length) {
-        // Hit point on globe surface in world space
-        const hp = hits[0].point.clone();
-        // Direction from globe center → hit point
-        const globeWP = globe.position.clone();
-        const dir = hp.clone().sub(globeWP).normalize();
-        // Place camera 1.9 units from globe center along that direction
+        // World-space globe center
+        const globeWP = new THREE.Vector3();
+        globe.getWorldPosition(globeWP);
+        // Direction from globe center → hit point on surface
+        const dir = hits[0].point.clone().sub(globeWP).normalize();
+        // Camera destination: 1.9 units along that direction from globe center
         const dest = globeWP.clone().add(dir.multiplyScalar(1.9));
         startZoom(dest);
         isZoomed = true;
