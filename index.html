@@ -1348,7 +1348,7 @@ setInterval(updateTime, 10000);
       camT    = 0;
     }
 
-    // ── Drag (slow, premium feel) ─────────────────────
+    // ── Drag — slow, premium ──────────────────────────
     canvas.addEventListener('mousedown', e => {
       isDrag = true; dragMoved = false;
       px = e.clientX; py = e.clientY;
@@ -1362,20 +1362,20 @@ setInterval(updateTime, 10000);
       const dx = e.clientX - px;
       const dy = e.clientY - py;
       if (Math.abs(dx) > 2 || Math.abs(dy) > 2) dragMoved = true;
-      velY += dx * 0.0008;   // slow, premium
-      velX += dy * 0.0008;
+      velY += dx * 0.00045;   // very slow, cinematic
+      velX += dy * 0.00045;
       px = e.clientX; py = e.clientY;
     });
 
-    // Touch
+    // Touch drag
     let prevT = null;
     canvas.addEventListener('touchstart',  e => { prevT = e.touches[0]; dragMoved = false; velX = 0; velY = 0; }, { passive: true });
     canvas.addEventListener('touchend',    () => { prevT = null; }, { passive: true });
     canvas.addEventListener('touchmove',   e => {
       if (!prevT) return;
       dragMoved = true;
-      velY += (e.touches[0].clientX - prevT.clientX) * 0.0008;
-      velX += (e.touches[0].clientY - prevT.clientY) * 0.0008;
+      velY += (e.touches[0].clientX - prevT.clientX) * 0.00045;
+      velX += (e.touches[0].clientY - prevT.clientY) * 0.00045;
       prevT = e.touches[0];
     }, { passive: true });
 
@@ -1383,42 +1383,51 @@ setInterval(updateTime, 10000);
     const raycaster = new THREE.Raycaster();
     const m2d = new THREE.Vector2();
 
+    // Build a sphere for hit-testing the whole globe surface
+    const globeHitMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(R * 1.02, 32, 32),
+      new THREE.MeshBasicMaterial({ visible: false, side: THREE.FrontSide })
+    );
+    globe.add(globeHitMesh);
+
     function toNDC(clientX, clientY) {
       const r = canvas.getBoundingClientRect();
       m2d.x =  ((clientX - r.left) / r.width)  * 2 - 1;
       m2d.y = -((clientY - r.top)  / r.height) * 2 + 1;
     }
 
-    // ── City click → cinematic zoom ──────────────────
-    canvas.addEventListener('click', e => {
-      if (dragMoved) return;
-      toNDC(e.clientX, e.clientY);
-      raycaster.setFromCamera(m2d, camera);
-      const hits = raycaster.intersectObjects(cityMeshes, false);
-      if (hits.length) {
-        // Get city world position, push camera toward it from current camera angle
-        const cityWP = new THREE.Vector3();
-        hits[0].object.getWorldPosition(cityWP);
-        // Direction: from camera toward city world pos, stop ~1.9 units from globe center
-        const globeWP = globe.position.clone(); // globe center in world space
-        const dir = cityWP.clone().sub(globeWP).normalize();
-        // Camera dest: globe center + dir * zoomDist, offset to match globe world x
-        const dest = globeWP.clone().add(dir.multiplyScalar(1.85));
-        startZoom(dest);
-        isZoomed = true;
-      } else if (isZoomed) {
+    // ── Double-click zoom ─────────────────────────────
+    canvas.addEventListener('dblclick', e => {
+      if (isZoomed) {
+        // Reset to home
         startZoom(CAM_HOME);
         isZoomed = false;
+        return;
+      }
+      // Raycast against the invisible globe sphere to get hit point
+      toNDC(e.clientX, e.clientY);
+      raycaster.setFromCamera(m2d, camera);
+      const hits = raycaster.intersectObject(globeHitMesh, false);
+      if (hits.length) {
+        // Hit point on globe surface in world space
+        const hp = hits[0].point.clone();
+        // Direction from globe center → hit point
+        const globeWP = globe.position.clone();
+        const dir = hp.clone().sub(globeWP).normalize();
+        // Place camera 1.9 units from globe center along that direction
+        const dest = globeWP.clone().add(dir.multiplyScalar(1.9));
+        startZoom(dest);
+        isZoomed = true;
       }
     });
 
-    // ── Tooltip on hover ──────────────────────────────
+    // ── Tooltip on city hover ─────────────────────────
     const tip = document.createElement('div');
     tip.style.cssText = `position:fixed;background:rgba(8,8,8,0.9);border:1px solid rgba(143,168,184,0.3);color:rgba(168,192,204,0.92);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.08em;padding:6px 16px;border-radius:100px;pointer-events:none;opacity:0;transition:opacity 0.12s;z-index:300;white-space:nowrap;`;
     document.body.appendChild(tip);
 
     canvas.addEventListener('mousemove', e => {
-      if (isDrag) { tip.style.opacity = '0'; return; }
+      if (isDrag) { tip.style.opacity = '0'; canvas.style.cursor = 'grabbing'; return; }
       toNDC(e.clientX, e.clientY);
       raycaster.setFromCamera(m2d, camera);
       const hits = raycaster.intersectObjects(cityMeshes, false);
@@ -1442,10 +1451,10 @@ setInterval(updateTime, 10000);
       requestAnimationFrame(tick);
       const t = (Date.now() - T0) / 1000;
 
-      // Rotation physics — slow idle drift + inertia
+      // Rotation physics
       if (!isDrag) {
         velX *= 0.90;
-        velY  = velY * 0.90 + 0.000288;
+        velY  = velY * 0.90 + 0.000288; // slow constant drift + inertia decay
         rotX += Math.sin(t * 0.15) * 0.00003;
       }
       rotX += velX;
@@ -1453,15 +1462,15 @@ setInterval(updateTime, 10000);
       globe.rotation.x = rotX;
       globe.rotation.y = rotY;
 
-      // Subtle parallax position nudge
+      // Subtle parallax position nudge on idle
       if (!isDrag) {
         globe.position.x = GLOBE_X + mouseNX * 0.018;
         globe.position.y =           mouseNY * -0.015;
       }
 
-      // Cinematic zoom — cubic ease-out over ~1.2s
+      // Cinematic zoom — cubic ease-out ~1.4s
       if (camT < 1) {
-        camT = Math.min(1, camT + 0.013);
+        camT = Math.min(1, camT + 0.012);
         const ease = 1 - Math.pow(1 - camT, 3);
         camera.position.lerpVectors(camFrom, camTo, ease);
         camera.lookAt(globe.position);
