@@ -140,7 +140,8 @@
     position: absolute;
     inset: 0;
     width: 100%; height: 100%;
-    pointer-events: all;
+    pointer-events: none; /* let hero-inner handle text, globe JS adds listeners directly */
+    z-index: 1;
   }
 
   .hero-inner {
@@ -151,6 +152,12 @@
     width: 100%;
     padding: 0 48px;
     align-items: stretch;
+    pointer-events: none; /* pass all clicks through to canvas */
+  }
+
+  /* Re-enable pointer events only on left text column */
+  .hero-left, .hero-right {
+    pointer-events: all;
   }
 
   .hero-left {
@@ -1314,8 +1321,11 @@ setInterval(updateTime, 10000);
       globe.add(sp);
     });
 
-    // ── Globe position — right-center, partly behind headline ──
-    globe.position.set(0.52, 0, 0);
+    canvas.style.pointerEvents = 'all';
+    canvas.style.zIndex = '3';
+
+    // ── Globe position — far right, partly behind headline ──
+    globe.position.set(1.05, 0, 0);
 
     // ── Physics-based interaction ─────────────────────
     let rotX = 0.12, rotY = -0.25;
@@ -1360,7 +1370,7 @@ setInterval(updateTime, 10000);
     const m2d = new THREE.Vector2();
     let zoomTarget = null, zoomStart = null, zoomT = 0;
     const CAM_DEFAULT = new THREE.Vector3(0, 0, 3.2);
-    const CAM_ZOOM    = 2.0;
+    const CAM_ZOOM    = 1.8;
 
     canvas.addEventListener('click', e => {
       const rect = canvas.getBoundingClientRect();
@@ -1370,7 +1380,7 @@ setInterval(updateTime, 10000);
       const hits = raycaster.intersectObjects(cityMeshes);
       if (hits.length) {
         const wp = hits[0].object.getWorldPosition(new THREE.Vector3());
-        zoomTarget = wp.clone().normalize().multiplyScalar(CAM_ZOOM + 0.6);
+        zoomTarget = wp.clone().normalize().multiplyScalar(CAM_ZOOM + 0.6).add(new THREE.Vector3(1.05, 0, 0));
         zoomStart  = camera.position.clone();
         zoomT = 0;
       } else if (zoomTarget) {
@@ -1421,8 +1431,8 @@ setInterval(updateTime, 10000);
 
       // Subtle parallax on idle (cursor)
       if (!isDrag) {
-        globe.position.x = 0.52 + mouseNX * 0.025;
-        globe.position.y =        mouseNY * -0.02;
+        globe.position.x = 1.05 + mouseNX * 0.025;
+        globe.position.y =         mouseNY * -0.02;
       }
 
       // Camera zoom cinematic
