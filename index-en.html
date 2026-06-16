@@ -1313,7 +1313,7 @@ setInterval(updateTime, 10000);
     canvas.style.zIndex = '3';
 
     // ── Globe position — far right, partly behind headline ──
-    const GLOBE_X = 1.1;
+    const GLOBE_X = 1.55;
     globe.position.set(GLOBE_X, 0, 0);
 
     // ── State ─────────────────────────────────────────
@@ -1431,7 +1431,7 @@ setInterval(updateTime, 10000);
         // During drag — velX/velY accumulate via mousemove
       } else {
         velX *= 0.92;
-        velY  = velY * 0.92 + 0.00032; // inertia + constant slow drift
+        velY  = velY * 0.92 + 0.000288; // inertia + constant slow drift
         rotX += Math.sin(t * 0.15) * 0.00003; // idle float
       }
       rotX += velX;
@@ -1480,7 +1480,6 @@ setInterval(updateTime, 10000);
     tick();
   }
 })();
-
 // ── Scroll reveal ──────────────────────────────────
 const reveals = document.querySelectorAll('.reveal');
 const observer = new IntersectionObserver(entries => {
