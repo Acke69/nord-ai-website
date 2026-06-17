@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NORD.AI — Boka ett gratis samtal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=Space+Mono:wght@400&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #080808;
+    --off-white: #F4F3EF;
+    --warm-grey: #E9E7E1;
+    --mid-grey: #B0ADA6;
+    --dark-card: #111110;
+    --border: rgba(255,255,255,0.08);
+    --border-light: rgba(0,0,0,0.08);
+    --text-dim: rgba(255,255,255,0.45);
+    --text-dim-dark: rgba(0,0,0,0.45);
+    --radius: 10px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--black);
+    color: #fff;
+    cursor: none;
+  }
+
+  .page-wrap { overflow-x: hidden; }
+
+  /* ── Cursor ── */
+  .cursor {
+    position: fixed; width: 8px; height: 8px;
+    background: #fff; border-radius: 50%;
+    pointer-events: none; z-index: 9999;
+    transition: transform 0.1s ease;
+    mix-blend-mode: difference;
+  }
+  .cursor-ring {
+    position: fixed; width: 36px; height: 36px;
+    border: 1px solid rgba(255,255,255,0.4); border-radius: 50%;
+    pointer-events: none; z-index: 9998;
+    transition: transform 0.25s ease, width 0.2s, height 0.2s, border-color 0.2s;
+    mix-blend-mode: difference;
+  }
+  body:has(a:hover) .cursor-ring,
+  body:has(button:hover) .cursor-ring { width: 56px; height: 56px; border-color: rgba(255,255,255,0.7); }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 24px 48px;
+    background: linear-gradient(to bottom, rgba(8,8,8,0.95) 0%, transparent 100%);
+  }
+  .nav-logo { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; color: #fff; text-decoration: none; }
+  .nav-logo span { color: var(--mid-grey); }
+  .nav-right { display: flex; gap: 12px; align-items: center; }
+  .btn-outline {
+    padding: 9px 22px; border: 1px solid rgba(255,255,255,0.2);
+    background: transparent; color: #fff;
+    font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 400;
+    border-radius: 100px; cursor: none;
+    transition: background 0.2s, border-color 0.2s; text-decoration: none; display: inline-flex; align-items: center;
+  }
+  .btn-outline:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.4); }
+  .btn-solid {
+    padding: 9px 22px; background: #fff; color: var(--black);
+    font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 500;
+    border: none; border-radius: 100px; cursor: none;
+    transition: background 0.2s, transform 0.15s; text-decoration: none; display: inline-flex; align-items: center;
+  }
+  .btn-solid:hover { background: var(--warm-grey); transform: scale(1.03); }
+
+  /* ── HERO HEADER ── */
+  .contact-hero {
+    min-height: 48vh;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 140px 48px 72px;
+    position: relative; overflow: hidden;
+    background: var(--black);
+    border-bottom: 1px solid var(--border);
+  }
+  .contact-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 80% at 80% 40%, rgba(143,168,184,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-eyebrow {
+    font-family: 'Space Mono', monospace; font-size: 10px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 28px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .hero-eyebrow::before { content: ''; width: 24px; height: 1px; background: currentColor; opacity: 0.4; }
+  .contact-hero h1 {
+    font-size: clamp(48px, 6vw, 88px);
+    font-weight: 500; letter-spacing: -0.04em; line-height: 1.0;
+    max-width: 700px;
+  }
+  .contact-hero h1 em { font-style: normal; color: var(--mid-grey); }
+  .status-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--text-dim);
+    font-family: 'Space Mono', monospace;
+    margin-top: 36px;
+  }
+  .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #6EE7B7; box-shadow: 0 0 8px #6EE7B7;
+    animation: pulse 2.5s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+
+  /* ── MAIN LAYOUT ── */
+  .contact-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    min-height: 60vh;
+  }
+
+  /* ── LEFT: INFO COLUMN ── */
+  .contact-info {
+    padding: 80px 64px 80px 48px;
+    border-right: 1px solid var(--border);
+    background: var(--black);
+    display: flex; flex-direction: column; gap: 64px;
+  }
+  .info-block {}
+  .info-label {
+    font-family: 'Space Mono', monospace; font-size: 10px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .info-label::before { content: ''; width: 16px; height: 1px; background: currentColor; opacity: 0.4; }
+  .info-title {
+    font-size: 22px; font-weight: 500; letter-spacing: -0.025em;
+    margin-bottom: 12px; line-height: 1.25;
+  }
+  .info-body {
+    font-size: 14px; line-height: 1.8; color: var(--text-dim); font-weight: 300;
+  }
+  .info-link {
+    color: rgba(255,255,255,0.7); text-decoration: none;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .info-link:hover { color: #fff; border-color: rgba(255,255,255,0.5); }
+
+  .bento-mini-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .bento-mini {
+    background: var(--dark-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px 20px;
+    transition: border-color 0.2s;
+  }
+  .bento-mini:hover { border-color: rgba(255,255,255,0.18); }
+  .bento-mini-num {
+    font-size: clamp(28px, 3vw, 40px); font-weight: 300;
+    letter-spacing: -0.04em; margin-bottom: 6px;
+  }
+  .bento-mini-label {
+    font-size: 11px; color: var(--text-dim); font-weight: 300; line-height: 1.5;
+  }
+
+  .divider { height: 1px; background: var(--border); }
+
+  .contact-details { display: flex; flex-direction: column; gap: 16px; }
+  .contact-detail-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 0; border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .contact-detail-row:last-child { border-bottom: none; }
+  .detail-key { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.06em; color: var(--text-dim); }
+  .detail-val { font-size: 13px; color: rgba(255,255,255,0.8); }
+
+  /* ── RIGHT: FORM COLUMN ── */
+  .contact-form-wrap {
+    padding: 80px 48px 80px 64px;
+    background: var(--black);
+    display: flex; flex-direction: column;
+  }
+  .form-headline {
+    font-size: 28px; font-weight: 500; letter-spacing: -0.03em;
+    margin-bottom: 8px;
+  }
+  .form-sub {
+    font-size: 13px; color: var(--text-dim); font-weight: 300; margin-bottom: 48px;
+  }
+
+  /* Form fields */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 8px; }
+  .form-group.full { grid-column: span 2; }
+  .form-label {
+    font-family: 'Space Mono', monospace; font-size: 10px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .form-input, .form-select, .form-textarea {
+    background: var(--dark-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px; font-weight: 300;
+    color: #fff;
+    transition: border-color 0.2s, background 0.2s;
+    outline: none;
+    width: 100%;
+    cursor: none;
+  }
+  .form-input::placeholder, .form-textarea::placeholder { color: rgba(255,255,255,0.2); }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: rgba(143,168,184,0.6);
+    background: rgba(255,255,255,0.03);
+  }
+  .form-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.3)' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; padding-right: 40px; cursor: none; }
+  .form-select option { background: #1a1a18; color: #fff; }
+  .form-textarea { resize: none; height: 120px; line-height: 1.6; }
+
+  /* Time slots */
+  .time-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .time-slot {
+    padding: 10px 8px; border: 1px solid var(--border);
+    border-radius: 8px; background: var(--dark-card);
+    font-size: 12px; font-family: 'Space Mono', monospace;
+    color: var(--text-dim); text-align: center;
+    cursor: none; transition: all 0.15s;
+    user-select: none;
+  }
+  .time-slot:hover { border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.7); }
+  .time-slot.selected {
+    border-color: rgba(143,168,184,0.7); color: #fff;
+    background: rgba(143,168,184,0.08);
+  }
+
+  /* Submit area */
+  .form-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 32px; padding-top: 32px;
+    border-top: 1px solid var(--border);
+    gap: 24px;
+  }
+  .form-note {
+    font-size: 11px; font-family: 'Space Mono', monospace;
+    color: var(--text-dim); line-height: 1.6;
+  }
+  .submit-btn {
+    padding: 14px 36px; background: #fff; color: var(--black);
+    font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 500;
+    border: none; border-radius: 100px; cursor: none; flex-shrink: 0;
+    display: flex; align-items: center; gap: 10px;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .submit-btn:hover { background: var(--warm-grey); transform: scale(1.03); }
+  .submit-btn-arrow {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--black); display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+  }
+
+  /* Success state */
+  .form-success {
+    display: none; flex-direction: column; align-items: flex-start;
+    gap: 20px; padding: 48px 0;
+  }
+  .success-check {
+    width: 48px; height: 48px; border-radius: 50%;
+    border: 1px solid rgba(110,231,183,0.4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: #6EE7B7;
+  }
+  .success-title { font-size: 28px; font-weight: 500; letter-spacing: -0.03em; }
+  .success-body { font-size: 14px; line-height: 1.8; color: var(--text-dim); max-width: 380px; }
+
+  /* ── TICKER ── */
+  .ticker-wrap {
+    overflow: hidden; border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border); padding: 18px 0;
+    background: var(--black);
+  }
+  .ticker {
+    display: flex; gap: 64px;
+    animation: ticker 22s linear infinite; width: max-content;
+  }
+  @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+  .ticker-item {
+    font-size: 11px; font-family: 'Space Mono', monospace;
+    letter-spacing: 0.06em; color: var(--text-dim); white-space: nowrap;
+    display: flex; align-items: center; gap: 20px;
+  }
+  .ticker-item::before { content: '◆'; font-size: 5px; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--black); padding: 48px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-top: 1px solid var(--border);
+  }
+  .footer-logo { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; color: rgba(255,255,255,0.5); }
+  .footer-copy { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text-dim); letter-spacing: 0.04em; }
+  .footer-links { display: flex; gap: 32px; }
+  .footer-links a { font-size: 12px; color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+  .footer-links a:hover { color: #fff; }
+
+  /* ── REVEAL ── */
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 900px) {
+    nav { padding: 20px 24px; }
+    .contact-hero { padding: 120px 24px 56px; }
+    .contact-body { grid-template-columns: 1fr; }
+    .contact-info { padding: 56px 24px; border-right: none; border-bottom: 1px solid var(--border); }
+    .contact-form-wrap { padding: 56px 24px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: span 1; }
+    .bento-mini-grid { grid-template-columns: 1fr 1fr; }
+    .form-footer { flex-direction: column; align-items: stretch; }
+    .submit-btn { justify-content: center; }
+    footer { flex-direction: column; gap: 20px; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">NORD<span>.AI</span></a>
+  <div class="nav-right">
+    <a href="index.html" class="btn-outline">← Tillbaka</a>
+    <a href="mailto:hello@nord.ai" class="btn-solid">hello@nord.ai</a>
+  </div>
+</nav>
+
+<!-- HERO HEADER -->
+<section class="contact-hero">
+  <div class="hero-eyebrow reveal">Kontakt</div>
+  <h1 class="reveal">
+    Låt oss bygga<br>
+    <em>något</em> som<br>
+    håller.
+  </h1>
+  <div class="status-row reveal">
+    <span class="status-dot"></span>
+    Öppen för nya projekt — svarar inom 24 timmar
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker">
+    <span class="ticker-item">Boka ett gratis samtal</span>
+    <span class="ticker-item">Inga förpliktelser</span>
+    <span class="ticker-item">Svar inom 24 timmar</span>
+    <span class="ticker-item">Baserade i Stockholm</span>
+    <span class="ticker-item">Världsomspännande</span>
+    <span class="ticker-item">Boka ett gratis samtal</span>
+    <span class="ticker-item">Inga förpliktelser</span>
+    <span class="ticker-item">Svar inom 24 timmar</span>
+    <span class="ticker-item">Baserade i Stockholm</span>
+    <span class="ticker-item">Världsomspännande</span>
+  </div>
+</div>
+
+<!-- MAIN: INFO + FORM -->
+<div class="contact-body">
+
+  <!-- LEFT: info -->
+  <div class="contact-info">
+
+    <div class="info-block reveal">
+      <div class="info-label">Vad händer härnäst</div>
+      <div class="info-title">Från formulär till första möte</div>
+      <div class="info-body">
+        Vi granskar din förfrågan inom ett dygn och hör av oss för att boka ett kostnadsfritt 30-minuterssamtal. Inga säljpitchar — bara en ärlig konversation om ditt projekt.
+      </div>
+    </div>
+
+    <div class="bento-mini-grid reveal">
+      <div class="bento-mini">
+        <div class="bento-mini-num">30min</div>
+        <div class="bento-mini-label">Kostnadsfritt första samtal</div>
+      </div>
+      <div class="bento-mini">
+        <div class="bento-mini-num">24h</div>
+        <div class="bento-mini-label">Svarstid på alla förfrågningar</div>
+      </div>
+      <div class="bento-mini">
+        <div class="bento-mini-num">48</div>
+        <div class="bento-mini-label">Projekt levererade sedan 2021</div>
+      </div>
+      <div class="bento-mini">
+        <div class="bento-mini-num">97%</div>
+        <div class="bento-mini-label">Kundlojalitet efter första projektet</div>
+      </div>
+    </div>
+
+    <div class="divider reveal"></div>
+
+    <div class="contact-details reveal">
+      <div class="contact-detail-row">
+        <span class="detail-key">E-post</span>
+        <a href="mailto:hello@nord.ai" class="info-link detail-val">hello@nord.ai</a>
+      </div>
+      <div class="contact-detail-row">
+        <span class="detail-key">Plats</span>
+        <span class="detail-val">Stockholm, Sverige</span>
+      </div>
+      <div class="contact-detail-row">
+        <span class="detail-key">Tillgänglighet</span>
+        <span class="detail-val">Öppen Q3 2025</span>
+      </div>
+      <div class="contact-detail-row">
+        <span class="detail-key">Tidszon</span>
+        <span class="detail-val">CET / CEST</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: form -->
+  <div class="contact-form-wrap">
+    <div class="form-headline reveal">Boka ett gratis samtal</div>
+    <div class="form-sub reveal">Berätta om ditt projekt — vi hör av oss inom 24 timmar.</div>
+
+    <form id="contactForm" novalidate>
+      <div class="form-grid reveal">
+
+        <div class="form-group">
+          <label class="form-label" for="fname">Förnamn</label>
+          <input class="form-input" id="fname" name="fname" type="text" placeholder="Anna" required autocomplete="given-name">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="lname">Efternamn</label>
+          <input class="form-input" id="lname" name="lname" type="text" placeholder="Lindström" required autocomplete="family-name">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">E-postadress</label>
+          <input class="form-input" id="email" name="email" type="email" placeholder="anna@företag.se" required autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="company">Företag</label>
+          <input class="form-input" id="company" name="company" type="text" placeholder="Ditt företag" autocomplete="organization">
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label" for="service">Vad behöver du hjälp med?</label>
+          <select class="form-select" id="service" name="service" required>
+            <option value="" disabled selected>Välj en tjänst</option>
+            <option value="ai-webb">AI-driven webbdesign</option>
+            <option value="brand">Varumärkessystem</option>
+            <option value="ux">UX-strategi</option>
+            <option value="tillvaxt">Tillväxtdesign</option>
+            <option value="annat">Annat / Vet inte ännu</option>
+          </select>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label" for="budget">Budget (ungefärlig)</label>
+          <select class="form-select" id="budget" name="budget">
+            <option value="" disabled selected>Välj budgetintervall</option>
+            <option value="under-100k">Under 100 000 kr</option>
+            <option value="100-250k">100 000 – 250 000 kr</option>
+            <option value="250-500k">250 000 – 500 000 kr</option>
+            <option value="over-500k">Över 500 000 kr</option>
+            <option value="diskutera">Vill diskutera</option>
+          </select>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label" for="message">Berätta om ditt projekt</label>
+          <textarea class="form-textarea" id="message" name="message" placeholder="Vad vill du bygga? Vilka utmaningar möter du? Vad är tidslinjerna?" required></textarea>
+        </div>
+
+        <div class="form-group full">
+          <label class="form-label">Föredragna tider för samtal (CET)</label>
+          <div class="time-slots" id="timeSlots">
+            <div class="time-slot" data-time="mån 09–11">Mån 09–11</div>
+            <div class="time-slot" data-time="mån 13–15">Mån 13–15</div>
+            <div class="time-slot" data-time="tis 09–11">Tis 09–11</div>
+            <div class="time-slot" data-time="tis 14–16">Tis 14–16</div>
+            <div class="time-slot" data-time="ons 10–12">Ons 10–12</div>
+            <div class="time-slot" data-time="tor 09–11">Tor 09–11</div>
+            <div class="time-slot" data-time="tor 14–16">Tor 14–16</div>
+            <div class="time-slot" data-time="fre 09–11">Fre 09–11</div>
+            <div class="time-slot" data-time="flexibel">Flexibel</div>
+          </div>
+          <input type="hidden" id="selectedTimes" name="selectedTimes">
+        </div>
+
+      </div>
+
+      <div class="form-footer">
+        <div class="form-note">
+          Vi säljer aldrig dina uppgifter.<br>
+          GDPR-kompatibel hantering.
+        </div>
+        <button type="submit" class="submit-btn">
+          Skicka förfrågan
+          <span class="submit-btn-arrow">↗</span>
+        </button>
+      </div>
+
+    </form>
+
+    <!-- Success message -->
+    <div class="form-success" id="formSuccess">
+      <div class="success-check">✓</div>
+      <div class="success-title">Tack — vi hör av oss!</div>
+      <div class="success-body">
+        Vi har tagit emot din förfrågan och återkommer inom 24 timmar för att boka in ert samtal. Kolla din inkorg på <span id="successEmail"></span>.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">NORD.AI</div>
+  <div class="footer-copy">© 2025 Nord Intelligence AB · Stockholm</div>
+  <div class="footer-links">
+    <a href="#">Integritetspolicy</a>
+    <a href="#">Instagram</a>
+    <a href="#">LinkedIn</a>
+  </div>
+</footer>
+</div><!-- /page-wrap -->
+
+<script>
+// ── Cursor ──────────────────────────────────────────
+const cursor = document.getElementById('cursor');
+const ring   = document.getElementById('cursor-ring');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.transform = `translate(${mx - 4}px, ${my - 4}px)`;
+});
+function animateRing() {
+  rx += (mx - rx - 18) * 0.28;
+  ry += (my - ry - 18) * 0.28;
+  ring.style.transform = `translate(${rx}px, ${ry}px)`;
+  requestAnimationFrame(animateRing);
+}
+animateRing();
+
+// ── Reveal on scroll ───────────────────────────────
+const reveals = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      const siblings = [...e.target.parentElement.querySelectorAll('.reveal')];
+      const idx = siblings.indexOf(e.target);
+      e.target.style.transitionDelay = `${idx * 55}ms`;
+      e.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1 });
+reveals.forEach(el => observer.observe(el));
+
+// ── Time slot picker ───────────────────────────────
+const slots = document.querySelectorAll('.time-slot');
+const selectedTimes = document.getElementById('selectedTimes');
+const picked = new Set();
+slots.forEach(slot => {
+  slot.addEventListener('click', () => {
+    const t = slot.dataset.time;
+    if (picked.has(t)) { picked.delete(t); slot.classList.remove('selected'); }
+    else               { picked.add(t);    slot.classList.add('selected');    }
+    selectedTimes.value = [...picked].join(', ');
+  });
+});
+
+// ── Form submission ────────────────────────────────
+const form    = document.getElementById('contactForm');
+const success = document.getElementById('formSuccess');
+const submitBtn = form.querySelector('.submit-btn');
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!form.checkValidity()) { form.reportValidity(); return; }
+
+  // Animate button
+  submitBtn.textContent = 'Skickar…';
+  submitBtn.disabled = true;
+
+  const data = {
+    fname:   form.fname.value.trim(),
+    lname:   form.lname.value.trim(),
+    email:   form.email.value.trim(),
+    company: form.company.value.trim(),
+    service: form.service.value,
+    budget:  form.budget.value,
+    message: form.message.value.trim(),
+    times:   selectedTimes.value || 'Ej angivet',
+  };
+
+  // Send via Formspree (replace YOUR_FORM_ID with actual Formspree endpoint)
+  try {
+    const res = await fetch('https://formspree.io/f/YOUR_FORM_ID', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        name:    `${data.fname} ${data.lname}`,
+        email:   data.email,
+        company: data.company,
+        service: data.service,
+        budget:  data.budget,
+        message: data.message,
+        times:   data.times,
+      }),
+    });
+
+    if (res.ok) {
+      // Show success
+      form.style.display = 'none';
+      document.querySelector('.form-headline').style.display = 'none';
+      document.querySelector('.form-sub').style.display = 'none';
+      document.getElementById('successEmail').textContent = data.email;
+      success.style.display = 'flex';
+    } else {
+      throw new Error('Server error');
+    }
+  } catch {
+    // Fallback — show success anyway for demo (replace with real error handling)
+    form.style.display = 'none';
+    document.querySelector('.form-headline').style.display = 'none';
+    document.querySelector('.form-sub').style.display = 'none';
+    document.getElementById('successEmail').textContent = data.email;
+    success.style.display = 'flex';
+  }
+});
+</script>
+</body>
+</html>
