@@ -1328,6 +1328,11 @@ setInterval(updateTime, 10000);
     const GLOBE_X = 1.55;
     globe.position.set(GLOBE_X, 0, 0);
 
+    // ── Camera never moves — globe scales/shifts for zoom ──
+    // This guarantees zoom-out always returns to exact home.
+    const GLOBE_HOME_POS   = new THREE.Vector3(GLOBE_X, 0, 0);
+    const GLOBE_HOME_SCALE = new THREE.Vector3(1, 1, 1);
+
     // ── State ─────────────────────────────────────────
     let rotX = 0.12, rotY = -0.25;
     let velX = 0, velY = 0;
@@ -1335,37 +1340,23 @@ setInterval(updateTime, 10000);
     let px = 0, py = 0;
     let mouseNX = 0, mouseNY = 0;
 
-    // Store the exact initial camera state to restore on zoom-out
-    // Camera looks slightly toward globe center (x:1.55) from (0,0,4.2)
-    camera.lookAt(GLOBE_X, 0, 0);
-    const CAM_HOME_POS  = camera.position.clone();       // (0, 0, 4.2)
-    const CAM_HOME_QUAT = camera.quaternion.clone();     // the exact look-at angle
-    const GLOBE_HOME    = new THREE.Vector3(GLOBE_X, 0, 0);
+    // Zoom tween
+    let zoomT    = 1;   // 1 = idle/done
+    let isZoomed = false;
+    let zoomFromPos   = GLOBE_HOME_POS.clone();
+    let zoomFromScale = GLOBE_HOME_SCALE.clone();
+    let zoomToPos     = GLOBE_HOME_POS.clone();
+    let zoomToScale   = GLOBE_HOME_SCALE.clone();
 
-    // Zoom state
-    let camFromPos  = CAM_HOME_POS.clone();
-    let camFromQuat = CAM_HOME_QUAT.clone();
-    let camToPos    = CAM_HOME_POS.clone();
-    let camToQuat   = CAM_HOME_QUAT.clone();
-    let camT        = 1;
-    let isZoomed    = false;
-
-    function startZoomTo(toPos, toLookAt) {
-      camFromPos  = camera.position.clone();
-      camFromQuat = camera.quaternion.clone();
-      camToPos    = toPos.clone();
-      // Compute target quaternion by temporarily moving camera there
-      const savedPos  = camera.position.clone();
-      const savedQuat = camera.quaternion.clone();
-      camera.position.copy(toPos);
-      camera.lookAt(toLookAt);
-      camToQuat = camera.quaternion.clone();
-      camera.position.copy(savedPos);
-      camera.quaternion.copy(savedQuat);
-      camT = 0;
+    function startGlobeZoom(toPos, toScale) {
+      zoomFromPos   = globe.position.clone();
+      zoomFromScale = globe.scale.clone();
+      zoomToPos     = toPos.clone();
+      zoomToScale   = toScale.clone();
+      zoomT = 0;
     }
 
-    // ── Drag — slow, premium ──────────────────────────
+    // ── Drag ─────────────────────────────────────────
     canvas.addEventListener('mousedown', e => {
       isDrag = true; dragMoved = false;
       px = e.clientX; py = e.clientY;
@@ -1379,12 +1370,12 @@ setInterval(updateTime, 10000);
       const dx = e.clientX - px;
       const dy = e.clientY - py;
       if (Math.abs(dx) > 2 || Math.abs(dy) > 2) dragMoved = true;
-      velY += dx * 0.00045;   // very slow, cinematic
+      velY += dx * 0.00045;
       velX += dy * 0.00045;
       px = e.clientX; py = e.clientY;
     });
 
-    // Touch drag
+    // Touch
     let prevT = null;
     canvas.addEventListener('touchstart',  e => { prevT = e.touches[0]; dragMoved = false; velX = 0; velY = 0; }, { passive: true });
     canvas.addEventListener('touchend',    () => { prevT = null; }, { passive: true });
@@ -1400,48 +1391,43 @@ setInterval(updateTime, 10000);
     const raycaster = new THREE.Raycaster();
     const m2d = new THREE.Vector2();
 
-    // Build a sphere for hit-testing the whole globe surface
-    // NOTE: visible:false breaks raycasting in r128 — use transparent+opacity:0 instead
     const globeHitMesh = new THREE.Mesh(
       new THREE.SphereGeometry(R * 1.02, 32, 32),
-      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, side: THREE.FrontSide, depthWrite: false })
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
     );
     globe.add(globeHitMesh);
 
-    function toNDC(clientX, clientY) {
+    function toNDC(cx, cy) {
       const r = canvas.getBoundingClientRect();
-      m2d.x =  ((clientX - r.left) / r.width)  * 2 - 1;
-      m2d.y = -((clientY - r.top)  / r.height) * 2 + 1;
+      m2d.x =  ((cx - r.left) / r.width)  * 2 - 1;
+      m2d.y = -((cy - r.top)  / r.height) * 2 + 1;
     }
 
-    // ── Double-click zoom ─────────────────────────────
-    // Prevent dblclick from triggering drag state
+    // ── Double-click: scale globe up/down, shift to center ──
     canvas.addEventListener('dblclick', e => {
       e.preventDefault();
       isDrag = false;
 
       if (isZoomed) {
-        // Restore globe to exact home, then zoom camera back
-        globe.position.copy(GLOBE_HOME);
-        startZoomTo(CAM_HOME_POS, GLOBE_HOME);
+        // Zoom out: return to exact home pos and scale
+        startGlobeZoom(GLOBE_HOME_POS, GLOBE_HOME_SCALE);
         isZoomed = false;
-        return;
-      }
-
-      toNDC(e.clientX, e.clientY);
-      raycaster.setFromCamera(m2d, camera);
-      const hits = raycaster.intersectObject(globeHitMesh, false);
-      if (hits.length) {
-        const globeWP = new THREE.Vector3();
-        globe.getWorldPosition(globeWP);
-        const dir  = hits[0].point.clone().sub(globeWP).normalize();
-        const dest = globeWP.clone().add(dir.multiplyScalar(1.9));
-        startZoomTo(dest, globeWP);
-        isZoomed = true;
+      } else {
+        toNDC(e.clientX, e.clientY);
+        raycaster.setFromCamera(m2d, camera);
+        const hits = raycaster.intersectObject(globeHitMesh, false);
+        if (hits.length) {
+          // Zoom in: scale up 1.7× and shift slightly toward center
+          startGlobeZoom(
+            new THREE.Vector3(GLOBE_X * 0.55, 0, 0),
+            new THREE.Vector3(1.7, 1.7, 1.7)
+          );
+          isZoomed = true;
+        }
       }
     });
 
-    // ── Tooltip on city hover ─────────────────────────
+    // ── Tooltip ──────────────────────────────────────
     const tip = document.createElement('div');
     tip.style.cssText = `position:fixed;background:rgba(8,8,8,0.9);border:1px solid rgba(143,168,184,0.3);color:rgba(168,192,204,0.92);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:0.08em;padding:6px 16px;border-radius:100px;pointer-events:none;opacity:0;transition:opacity 0.12s;z-index:300;white-space:nowrap;`;
     document.body.appendChild(tip);
@@ -1474,7 +1460,7 @@ setInterval(updateTime, 10000);
       // Rotation physics
       if (!isDrag) {
         velX *= 0.90;
-        velY  = velY * 0.90 + 0.000288; // slow constant drift + inertia decay
+        velY  = velY * 0.90 + 0.000288;
         rotX += Math.sin(t * 0.15) * 0.00003;
       }
       rotX += velX;
@@ -1482,45 +1468,39 @@ setInterval(updateTime, 10000);
       globe.rotation.x = rotX;
       globe.rotation.y = rotY;
 
-      // Subtle parallax position nudge — only when not zooming
-      if (!isDrag && camT >= 1) {
+      // Globe zoom tween — cubic ease-out
+      if (zoomT < 1) {
+        zoomT = Math.min(1, zoomT + 0.014);
+        const e3 = 1 - Math.pow(1 - zoomT, 3);
+        globe.position.lerpVectors(zoomFromPos, zoomToPos, e3);
+        globe.scale.lerpVectors(zoomFromScale, zoomToScale, e3);
+        if (zoomT >= 1 && !isZoomed) {
+          // Hard-snap to exact home on completion
+          globe.position.copy(GLOBE_HOME_POS);
+          globe.scale.copy(GLOBE_HOME_SCALE);
+        }
+      } else if (!isZoomed) {
+        // Subtle parallax only when fully at home and not zoomed
         globe.position.x = GLOBE_X + mouseNX * 0.018;
         globe.position.y =           mouseNY * -0.015;
       }
 
-      // Cinematic zoom — cubic ease-out ~1.4s, slerp quaternion for exact camera angle
-      if (camT < 1) {
-        camT = Math.min(1, camT + 0.012);
-        const ease = 1 - Math.pow(1 - camT, 3);
-        camera.position.lerpVectors(camFromPos, camToPos, ease);
-        THREE.Quaternion.slerp(camFromQuat, camToQuat, camera.quaternion, ease);
-        if (camT >= 1 && !isZoomed) {
-          // Guarantee exact home state
-          camera.position.copy(CAM_HOME_POS);
-          camera.quaternion.copy(CAM_HOME_QUAT);
-          globe.position.copy(GLOBE_HOME);
-        }
-      }
-
       // City dots + pulse rings
       cityMeshes.forEach((dot, i) => {
-        const d = dot.userData;
-        const delay  = d.city.home ? 0.3 : 0.8 + i * 0.12;
-        const fadeIn = Math.min(1, Math.max(0, (t - delay) / 0.8));
-        dot.material.opacity = fadeIn * d.baseOpacity;
-
+        const d     = dot.userData;
+        const delay = d.city.home ? 0.3 : 0.8 + i * 0.12;
+        const fi    = Math.min(1, Math.max(0, (t - delay) / 0.8));
+        dot.material.opacity = fi * d.baseOpacity;
         const ring  = pulseRings[i];
         const pulse = 0.45 + 0.55 * Math.sin(t * 1.8 + ring.userData.phase);
-        ring.material.opacity = fadeIn * 0.42 * pulse;
+        ring.material.opacity = fi * 0.42 * pulse;
         ring.scale.setScalar(1 + 0.38 * Math.sin(t * 1.8 + ring.userData.phase));
       });
 
-      // Label staggered fade-in
+      // Label fade-in
       globe.children.forEach(obj => {
-        if (obj instanceof THREE.Sprite) {
-          if (t > (obj.userData.delay || 0))
-            obj.material.opacity = Math.min(1, obj.material.opacity + 0.007);
-        }
+        if (obj instanceof THREE.Sprite && t > (obj.userData.delay || 0))
+          obj.material.opacity = Math.min(1, obj.material.opacity + 0.007);
       });
 
       renderer.render(scene, camera);
@@ -1528,8 +1508,6 @@ setInterval(updateTime, 10000);
     tick();
   }
 })();
-
-// ── Scroll reveal ──────────────────────────────────
 
 // ── Scroll reveal ──────────────────────────────────
 const reveals = document.querySelectorAll('.reveal');
