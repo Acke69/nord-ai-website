@@ -452,13 +452,6 @@
     position: relative;
     overflow: hidden;
   }
-  .process-track {
-    display: grid;
-    grid-template-columns: repeat(5, calc(25% - 9px));
-    gap: 12px;
-    transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
-    width: calc(500% / 4);
-  }
   .process-step {
     background: var(--dark-card);
     border: 1px solid var(--border);
@@ -523,11 +516,23 @@
     border-radius: 2px;
   }
 
+  /* Track is 5 cards wide. Each card = container/4 wide (show 4 at once on desktop).
+     Total track = 5 × (100%/4) = 125% of container.
+     To slide card N into view: translateX(-N × 100%/5) of track width
+     = -N × 20% of track. JS uses current*(100/TOTAL) which = current*20%. Correct. */
+  .process-track {
+    display: grid;
+    grid-template-columns: repeat(5, calc(25% - 9px));
+    gap: 12px;
+    width: calc(5 * 25% - 0px); /* 125% of container */
+    transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
   /* Responsive: tablet = 3, mobile = 1 */
   @media (max-width: 1024px) {
     .process-track {
       grid-template-columns: repeat(5, calc(33.333% - 8px));
-      width: calc(500% / 3);
+      width: calc(5 * 33.333%);
     }
   }
   @media (max-width: 600px) {
@@ -537,7 +542,6 @@
       width: 500%;
     }
   }
-
   /* WORK section — horizontal ticker */
   .ticker-wrap {
     overflow: hidden;
