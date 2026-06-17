@@ -87,8 +87,10 @@
     font-family: 'Space Mono', monospace;
     color: var(--text-dim);
     letter-spacing: 0.04em;
-    text-align: center;
-    line-height: 1.6;
+    text-align: left;
+    white-space: nowrap;
+    margin-right: auto;
+    margin-left: 40px;
   }
   .nav-right {
     display: flex; gap: 12px; align-items: center;
@@ -794,8 +796,7 @@
 <nav>
   <a href="#" class="nav-logo">NORD<span>.AI</span></a>
   <div class="nav-center">
-    Baserade i Stockholm<br>
-    Världsomspännande · <span id="nav-time">—</span>
+    Baserade i Stockholm — Världsomspännande · <span id="nav-time">—</span>
   </div>
   <div class="nav-right">
     <div class="lang-switcher" id="langSwitcher">
