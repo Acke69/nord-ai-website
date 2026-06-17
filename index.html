@@ -452,12 +452,19 @@
     position: relative;
     overflow: hidden;
   }
+  .process-track {
+    display: flex;
+    gap: 12px;
+    transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+  }
   .process-step {
+    flex: 0 0 calc(25% - 9px);
     background: var(--dark-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 36px 32px;
-    min-width: 0;
+    box-sizing: border-box;
   }
   .process-step-num {
     font-family: 'Space Grotesk', sans-serif;
@@ -509,38 +516,20 @@
     border-radius: 50%;
     background: rgba(255,255,255,0.25);
     transition: background 0.2s, width 0.2s;
+    cursor: none;
   }
   .process-dot.active {
     background: #fff;
     width: 16px;
     border-radius: 2px;
   }
-
-  /* Track is 5 cards wide. Each card = container/4 wide (show 4 at once on desktop).
-     Total track = 5 × (100%/4) = 125% of container.
-     To slide card N into view: translateX(-N × 100%/5) of track width
-     = -N × 20% of track. JS uses current*(100/TOTAL) which = current*20%. Correct. */
-  .process-track {
-    display: grid;
-    grid-template-columns: repeat(5, calc(25% - 9px));
-    gap: 12px;
-    width: calc(5 * 25% - 0px); /* 125% of container */
-    transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* Responsive: tablet = 3, mobile = 1 */
+  /* Responsive */
   @media (max-width: 1024px) {
-    .process-track {
-      grid-template-columns: repeat(5, calc(33.333% - 8px));
-      width: calc(5 * 33.333%);
-    }
+    .process-step { flex: 0 0 calc(33.333% - 8px); }
   }
   @media (max-width: 600px) {
     .process-strip { padding: 0 24px 72px; }
-    .process-track {
-      grid-template-columns: repeat(5, 100%);
-      width: 500%;
-    }
+    .process-step { flex: 0 0 100%; }
   }
   /* WORK section — horizontal ticker */
   .ticker-wrap {
@@ -1518,26 +1507,31 @@ reveals.forEach(el => observer.observe(el));
 
 // ── Process Carousel ────────────────────────────────
 (function() {
-  const track = document.getElementById('processTrack');
+  const track   = document.getElementById('processTrack');
   const prevBtn = document.getElementById('procPrev');
   const nextBtn = document.getElementById('procNext');
-  const dotsWrap = document.getElementById('procDots');
-  const TOTAL = 5;
-  let current = 0;
+  const dotsWrap= document.getElementById('procDots');
+  const steps   = track.querySelectorAll('.process-step');
+  const TOTAL   = steps.length; // 5
+  let current   = 0;
 
-  function visible() {
+  function visibleCount() {
     const w = window.innerWidth;
-    if (w <= 600) return 1;
+    if (w <= 600)  return 1;
     if (w <= 1024) return 3;
     return 4;
   }
 
-  function maxIndex() { return TOTAL - visible(); }
+  function maxIndex() { return TOTAL - visibleCount(); }
+
+  function cardWidth() {
+    // Width of one card including gap
+    return steps[0].getBoundingClientRect().width + 12;
+  }
 
   function buildDots() {
     dotsWrap.innerHTML = '';
-    const steps = maxIndex() + 1;
-    for (let i = 0; i < steps; i++) {
+    for (let i = 0; i <= maxIndex(); i++) {
       const d = document.createElement('span');
       d.className = 'process-dot' + (i === current ? ' active' : '');
       d.onclick = () => goTo(i);
@@ -1548,7 +1542,8 @@ reveals.forEach(el => observer.observe(el));
 
   function goTo(idx) {
     current = Math.max(0, Math.min(idx, maxIndex()));
-    track.style.transform = `translateX(-${current * (100 / TOTAL)}%)`;
+    const offset = current * cardWidth();
+    track.style.transform = `translateX(-${offset}px)`;
     prevBtn.disabled = current === 0;
     nextBtn.disabled = current >= maxIndex();
     buildDots();
@@ -1556,9 +1551,12 @@ reveals.forEach(el => observer.observe(el));
 
   window.stepCarousel = (dir) => goTo(current + dir);
 
+  // Init
   buildDots();
+
   window.addEventListener('resize', () => {
     current = Math.min(current, maxIndex());
+    buildDots();
     goTo(current);
   });
 })();
