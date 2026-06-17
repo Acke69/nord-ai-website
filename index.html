@@ -1286,17 +1286,34 @@ setInterval(updateTime, 10000);
       globe.add(ring);
       pulseRings.push(ring);
 
-      // Label sprite
+      // Label sprite — high-DPI aware, crisp at all zoom levels
+      const DPR        = Math.max(window.devicePixelRatio || 1, 2); // min 2× for retina
+      const FONT_PX    = 15;
+      const CANVAS_W   = 512;   // 4× logical resolution for sharp zoom
+      const CANVAS_H   = 64;
       const lc = document.createElement('canvas');
-      lc.width = 256; lc.height = 48;
+      lc.width  = CANVAS_W * DPR;
+      lc.height = CANVAS_H * DPR;
       const lx = lc.getContext('2d');
-      lx.font = '500 14px "Space Grotesk", sans-serif';
+      lx.scale(DPR, DPR);                         // scale all drawing ops
+      lx.imageSmoothingEnabled = true;
+      lx.imageSmoothingQuality = 'high';
+      lx.font = `500 ${FONT_PX * 2}px "Space Grotesk", sans-serif`; // 2× font inside 4× canvas
       lx.fillStyle = city.home ? 'rgba(200,224,232,0.95)' : 'rgba(168,192,204,0.82)';
-      lx.fillText(city.name, 4, 32);
+      lx.textBaseline = 'middle';
+      lx.fillText(city.name, 6, CANVAS_H / 2);
+
+      const tex = new THREE.CanvasTexture(lc);
+      tex.anisotropy = renderer.capabilities.getMaxAnisotropy(); // max anisotropic filtering
+      tex.minFilter  = THREE.LinearMipmapLinearFilter;
+      tex.magFilter  = THREE.LinearFilter;
+      tex.needsUpdate = true;
+
       const sp = new THREE.Sprite(
-        new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(lc), transparent: true, opacity: 0, depthWrite: false })
+        new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false, sizeAttenuation: true })
       );
-      sp.scale.set(0.44, 0.083, 1);
+      // Scale sprite to match logical canvas size in world units
+      sp.scale.set(0.44, 0.044, 1);
       const lpos = pos.clone().multiplyScalar(1.1);
       sp.position.copy(lpos);
       sp.userData = { delay: city.home ? 0.5 : 1.2 + idx * 0.18 };
