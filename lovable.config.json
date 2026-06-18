@@ -1,0 +1,15 @@
+{
+  "project": "NORD.AI Landing Page",
+  "description": "Swedish AI web agency landing page. Static HTML/CSS/JS — no build step required.",
+  "framework": "vanilla",
+  "entryPoint": "index.html",
+  "pages": {
+    "index.html": "Landningssida (svenska)",
+    "kontakt.html": "Kontaktsida — bokningsformulär"
+  },
+  "doNotModify": [
+    "index.html",
+    "kontakt.html"
+  ],
+  "notes": "This project is maintained via Claude AI + GitHub API. Do not rename or move files. Changes pushed to main are auto-synced."
+}
