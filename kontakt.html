@@ -3,332 +3,261 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NORD.AI — Boka ett gratis samtal</title>
+<title>NORD.AI — Boka ett samtal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=Space+Mono:wght@400&display=swap" rel="stylesheet">
-
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --black: #080808;
-    --off-white: #F4F3EF;
-    --warm-grey: #E9E7E1;
-    --mid-grey: #B0ADA6;
-    --dark-card: #111110;
-    --border: rgba(255,255,255,0.08);
-    --border-light: rgba(0,0,0,0.08);
-    --text-dim: rgba(255,255,255,0.45);
-    --text-dim-dark: rgba(0,0,0,0.45);
-    --radius: 10px;
+    --black:       #080808;
+    --off-white:   #F4F3EF;
+    --warm-grey:   #E9E7E1;
+    --mid-grey:    #B0ADA6;
+    --dark-card:   #111110;
+    --border:      rgba(255,255,255,0.08);
+    --border-light:rgba(0,0,0,0.08);
+    --text-dim:    rgba(255,255,255,0.45);
+    --text-dim-dark:rgba(0,0,0,0.42);
+    --radius:      10px;
   }
-
   html { scroll-behavior: smooth; }
-
   body {
     font-family: 'Space Grotesk', sans-serif;
-    background: var(--black);
-    color: #fff;
+    background: var(--off-white);
+    color: var(--black);
     cursor: none;
+    overflow-x: hidden;
   }
-
-  .page-wrap { overflow-x: hidden; }
 
   /* ── Cursor ── */
   .cursor {
     position: fixed; width: 8px; height: 8px;
-    background: #fff; border-radius: 50%;
+    background: var(--black); border-radius: 50%;
     pointer-events: none; z-index: 9999;
-    transition: transform 0.1s ease;
-    mix-blend-mode: difference;
+    mix-blend-mode: multiply;
   }
   .cursor-ring {
     position: fixed; width: 36px; height: 36px;
-    border: 1px solid rgba(255,255,255,0.4); border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.25); border-radius: 50%;
     pointer-events: none; z-index: 9998;
-    transition: transform 0.25s ease, width 0.2s, height 0.2s, border-color 0.2s;
-    mix-blend-mode: difference;
+    transition: width 0.2s, height 0.2s, border-color 0.2s;
+    mix-blend-mode: multiply;
   }
   body:has(a:hover) .cursor-ring,
-  body:has(button:hover) .cursor-ring { width: 56px; height: 56px; border-color: rgba(255,255,255,0.7); }
+  body:has(button:hover) .cursor-ring { width: 52px; height: 52px; border-color: rgba(0,0,0,0.5); }
 
   /* ── NAV ── */
   nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
     display: flex; align-items: center; justify-content: space-between;
     padding: 24px 48px;
-    background: linear-gradient(to bottom, rgba(8,8,8,0.95) 0%, transparent 100%);
+    background: rgba(244,243,239,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-light);
   }
-  .nav-logo { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; color: #fff; text-decoration: none; }
+  .nav-logo { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; color: var(--black); text-decoration: none; }
   .nav-logo span { color: var(--mid-grey); }
   .nav-right { display: flex; gap: 12px; align-items: center; }
-  .btn-outline {
-    padding: 9px 22px; border: 1px solid rgba(255,255,255,0.2);
-    background: transparent; color: #fff;
-    font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 400;
+  .btn-ghost {
+    padding: 9px 22px; border: 1px solid var(--border-light);
+    background: transparent; color: var(--black);
+    font-family: 'Space Grotesk', sans-serif; font-size: 13px;
     border-radius: 100px; cursor: none;
-    transition: background 0.2s, border-color 0.2s; text-decoration: none; display: inline-flex; align-items: center;
+    transition: background 0.2s, border-color 0.2s; text-decoration: none;
+    display: inline-flex; align-items: center;
   }
-  .btn-outline:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.4); }
-  .btn-solid {
-    padding: 9px 22px; background: #fff; color: var(--black);
+  .btn-ghost:hover { background: var(--warm-grey); border-color: rgba(0,0,0,0.15); }
+  .btn-dark {
+    padding: 9px 22px; background: var(--black); color: #fff;
     font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 500;
     border: none; border-radius: 100px; cursor: none;
-    transition: background 0.2s, transform 0.15s; text-decoration: none; display: inline-flex; align-items: center;
+    transition: opacity 0.2s, transform 0.15s; text-decoration: none;
+    display: inline-flex; align-items: center;
   }
-  .btn-solid:hover { background: var(--warm-grey); transform: scale(1.03); }
+  .btn-dark:hover { opacity: 0.8; transform: scale(1.03); }
 
-  /* ── HERO HEADER ── */
-  .contact-hero {
-    min-height: 48vh;
-    display: flex; flex-direction: column; justify-content: flex-end;
-    padding: 140px 48px 72px;
-    position: relative; overflow: hidden;
+  /* ── PAGE LAYOUT ── */
+  .page {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 100vh;
+    padding-top: 80px;
+  }
+
+  /* ── LEFT: headline + meta ── */
+  .left-col {
     background: var(--black);
-    border-bottom: 1px solid var(--border);
+    color: #fff;
+    padding: 80px 64px 80px 48px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: sticky; top: 80px; height: calc(100vh - 80px);
   }
-  .contact-hero::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: radial-gradient(ellipse 60% 80% at 80% 40%, rgba(143,168,184,0.06) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .hero-eyebrow {
+  .left-top {}
+  .eyebrow {
     font-family: 'Space Mono', monospace; font-size: 10px;
     letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--text-dim); margin-bottom: 28px;
+    color: var(--text-dim); margin-bottom: 40px;
     display: flex; align-items: center; gap: 12px;
   }
-  .hero-eyebrow::before { content: ''; width: 24px; height: 1px; background: currentColor; opacity: 0.4; }
-  .contact-hero h1 {
-    font-size: clamp(48px, 6vw, 88px);
+  .eyebrow::before { content: ''; width: 24px; height: 1px; background: currentColor; opacity: 0.4; }
+  .left-headline {
+    font-size: clamp(40px, 3.8vw, 64px);
     font-weight: 500; letter-spacing: -0.04em; line-height: 1.0;
-    max-width: 700px;
+    margin-bottom: 32px;
   }
-  .contact-hero h1 em { font-style: normal; color: var(--mid-grey); }
+  .left-headline em { font-style: normal; color: var(--mid-grey); }
+  .left-body {
+    font-size: 14px; line-height: 1.9; color: var(--text-dim);
+    font-weight: 300; max-width: 360px; margin-bottom: 56px;
+  }
+
+  .meta-list { display: flex; flex-direction: column; }
+  .meta-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 0; border-top: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .meta-key { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.06em; color: var(--text-dim); }
+  .meta-val { color: rgba(255,255,255,0.75); }
+  .meta-link { color: rgba(255,255,255,0.75); text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.15); transition: color 0.2s; }
+  .meta-link:hover { color: #fff; }
+
   .status-row {
     display: flex; align-items: center; gap: 8px;
-    font-size: 12px; color: var(--text-dim);
-    font-family: 'Space Mono', monospace;
-    margin-top: 36px;
+    font-size: 11px; font-family: 'Space Mono', monospace;
+    color: var(--text-dim); margin-top: 48px;
   }
   .status-dot {
     width: 6px; height: 6px; border-radius: 50%;
     background: #6EE7B7; box-shadow: 0 0 8px #6EE7B7;
     animation: pulse 2.5s infinite;
   }
-  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
 
-  /* ── MAIN LAYOUT ── */
-  .contact-body {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
-    min-height: 60vh;
+  /* ── RIGHT: form ── */
+  .right-col {
+    background: var(--off-white);
+    padding: 80px 48px 80px 64px;
   }
 
-  /* ── LEFT: INFO COLUMN ── */
-  .contact-info {
-    padding: 80px 64px 80px 48px;
-    border-right: 1px solid var(--border);
-    background: var(--black);
-    display: flex; flex-direction: column; gap: 64px;
-  }
-  .info-block {}
-  .info-label {
+  .form-section-label {
     font-family: 'Space Mono', monospace; font-size: 10px;
     letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--text-dim); margin-bottom: 16px;
+    color: var(--text-dim-dark); margin-bottom: 24px;
     display: flex; align-items: center; gap: 10px;
   }
-  .info-label::before { content: ''; width: 16px; height: 1px; background: currentColor; opacity: 0.4; }
-  .info-title {
-    font-size: 22px; font-weight: 500; letter-spacing: -0.025em;
-    margin-bottom: 12px; line-height: 1.25;
-  }
-  .info-body {
-    font-size: 14px; line-height: 1.8; color: var(--text-dim); font-weight: 300;
-  }
-  .info-link {
-    color: rgba(255,255,255,0.7); text-decoration: none;
-    border-bottom: 1px solid rgba(255,255,255,0.15);
-    transition: color 0.2s, border-color 0.2s;
-  }
-  .info-link:hover { color: #fff; border-color: rgba(255,255,255,0.5); }
+  .form-section-label::before { content:''; width:16px; height:1px; background:currentColor; opacity:.35; }
 
-  .bento-mini-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-  }
-  .bento-mini {
-    background: var(--dark-card); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 24px 20px;
-    transition: border-color 0.2s;
-  }
-  .bento-mini:hover { border-color: rgba(255,255,255,0.18); }
-  .bento-mini-num {
-    font-size: clamp(28px, 3vw, 40px); font-weight: 300;
-    letter-spacing: -0.04em; margin-bottom: 6px;
-  }
-  .bento-mini-label {
-    font-size: 11px; color: var(--text-dim); font-weight: 300; line-height: 1.5;
-  }
+  .form-block { margin-bottom: 48px; }
 
-  .divider { height: 1px; background: var(--border); }
-
-  .contact-details { display: flex; flex-direction: column; gap: 16px; }
-  .contact-detail-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 0; border-bottom: 1px solid var(--border);
-    font-size: 13px;
-  }
-  .contact-detail-row:last-child { border-bottom: none; }
-  .detail-key { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.06em; color: var(--text-dim); }
-  .detail-val { font-size: 13px; color: rgba(255,255,255,0.8); }
-
-  /* ── RIGHT: FORM COLUMN ── */
-  .contact-form-wrap {
-    padding: 80px 48px 80px 64px;
-    background: var(--black);
-    display: flex; flex-direction: column;
-  }
-  .form-headline {
-    font-size: 28px; font-weight: 500; letter-spacing: -0.03em;
-    margin-bottom: 8px;
-  }
-  .form-sub {
-    font-size: 13px; color: var(--text-dim); font-weight: 300; margin-bottom: 48px;
-  }
-
-  /* Form fields */
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .form-group { display: flex; flex-direction: column; gap: 8px; }
-  .form-group.full { grid-column: span 2; }
-  .form-label {
+  .field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .field-label {
     font-family: 'Space Mono', monospace; font-size: 10px;
-    letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--text-dim);
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim-dark);
   }
-  .form-input, .form-select, .form-textarea {
-    background: var(--dark-card);
-    border: 1px solid var(--border);
+  .field-input, .field-select, .field-textarea {
+    background: #fff;
+    border: 1px solid var(--border-light);
     border-radius: var(--radius);
     padding: 14px 18px;
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 14px; font-weight: 300;
-    color: #fff;
-    transition: border-color 0.2s, background 0.2s;
-    outline: none;
-    width: 100%;
-    cursor: none;
+    font-size: 14px; font-weight: 300; color: var(--black);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none; width: 100%; cursor: none;
   }
-  .form-input::placeholder, .form-textarea::placeholder { color: rgba(255,255,255,0.2); }
-  .form-input:focus, .form-select:focus, .form-textarea:focus {
-    border-color: rgba(143,168,184,0.6);
-    background: rgba(255,255,255,0.03);
+  .field-input::placeholder, .field-textarea::placeholder { color: rgba(0,0,0,0.2); }
+  .field-input:focus, .field-select:focus, .field-textarea:focus {
+    border-color: rgba(0,0,0,0.3);
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.04);
   }
-  .form-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.3)' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; padding-right: 40px; cursor: none; }
-  .form-select option { background: #1a1a18; color: #fff; }
-  .form-textarea { resize: none; height: 120px; line-height: 1.6; }
+  .field-select {
+    appearance: none; cursor: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(0,0,0,0.3)' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 16px center;
+    background-color: #fff; padding-right: 40px;
+  }
+  .field-select option { background: #fff; color: var(--black); }
+  .field-textarea { resize: none; height: 110px; line-height: 1.7; }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
   /* Time slots */
-  .time-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .time-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 4px; }
   .time-slot {
-    padding: 10px 8px; border: 1px solid var(--border);
-    border-radius: 8px; background: var(--dark-card);
-    font-size: 12px; font-family: 'Space Mono', monospace;
-    color: var(--text-dim); text-align: center;
-    cursor: none; transition: all 0.15s;
-    user-select: none;
+    padding: 11px 8px; border: 1px solid var(--border-light);
+    border-radius: 8px; background: #fff;
+    font-size: 11px; font-family: 'Space Mono', monospace;
+    color: var(--text-dim-dark); text-align: center;
+    cursor: none; transition: all 0.15s; user-select: none;
   }
-  .time-slot:hover { border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.7); }
+  .time-slot:hover { border-color: rgba(0,0,0,0.2); color: var(--black); }
   .time-slot.selected {
-    border-color: rgba(143,168,184,0.7); color: #fff;
-    background: rgba(143,168,184,0.08);
+    border-color: var(--black); color: var(--black);
+    background: var(--warm-grey); font-weight: 500;
   }
 
-  /* Submit area */
+  /* Divider */
+  .form-divider { height: 1px; background: var(--border-light); margin: 0 0 48px; }
+
+  /* Submit */
   .form-footer {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-top: 32px; padding-top: 32px;
-    border-top: 1px solid var(--border);
-    gap: 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
   }
   .form-note {
     font-size: 11px; font-family: 'Space Mono', monospace;
-    color: var(--text-dim); line-height: 1.6;
+    color: var(--text-dim-dark); line-height: 1.7;
   }
   .submit-btn {
-    padding: 14px 36px; background: #fff; color: var(--black);
+    padding: 14px 36px; background: var(--black); color: #fff;
     font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 500;
     border: none; border-radius: 100px; cursor: none; flex-shrink: 0;
     display: flex; align-items: center; gap: 10px;
-    transition: background 0.2s, transform 0.15s;
+    transition: opacity 0.2s, transform 0.15s;
   }
-  .submit-btn:hover { background: var(--warm-grey); transform: scale(1.03); }
-  .submit-btn-arrow {
-    width: 20px; height: 20px; border-radius: 50%;
-    background: var(--black); display: flex; align-items: center; justify-content: center;
-    font-size: 11px;
+  .submit-btn:hover { opacity: 0.85; transform: scale(1.03); }
+  .submit-btn:disabled { opacity: 0.4; }
+  .submit-arrow {
+    width: 20px; height: 20px; border-radius: 50%; background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: var(--black);
   }
 
-  /* Success state */
+  /* Success */
   .form-success {
-    display: none; flex-direction: column; align-items: flex-start;
-    gap: 20px; padding: 48px 0;
+    display: none; flex-direction: column; gap: 20px; padding: 48px 0;
   }
   .success-check {
     width: 48px; height: 48px; border-radius: 50%;
-    border: 1px solid rgba(110,231,183,0.4);
+    border: 1px solid rgba(0,0,0,0.12);
     display: flex; align-items: center; justify-content: center;
-    font-size: 20px; color: #6EE7B7;
+    font-size: 18px;
   }
-  .success-title { font-size: 28px; font-weight: 500; letter-spacing: -0.03em; }
-  .success-body { font-size: 14px; line-height: 1.8; color: var(--text-dim); max-width: 380px; }
-
-  /* ── TICKER ── */
-  .ticker-wrap {
-    overflow: hidden; border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border); padding: 18px 0;
-    background: var(--black);
-  }
-  .ticker {
-    display: flex; gap: 64px;
-    animation: ticker 22s linear infinite; width: max-content;
-  }
-  @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-  .ticker-item {
-    font-size: 11px; font-family: 'Space Mono', monospace;
-    letter-spacing: 0.06em; color: var(--text-dim); white-space: nowrap;
-    display: flex; align-items: center; gap: 20px;
-  }
-  .ticker-item::before { content: '◆'; font-size: 5px; }
+  .success-title { font-size: 32px; font-weight: 500; letter-spacing: -0.03em; }
+  .success-body { font-size: 14px; line-height: 1.8; color: var(--text-dim-dark); max-width: 380px; }
 
   /* ── FOOTER ── */
   footer {
-    background: var(--black); padding: 48px;
+    background: var(--black); padding: 40px 48px;
     display: flex; align-items: center; justify-content: space-between;
     border-top: 1px solid var(--border);
   }
-  .footer-logo { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; color: rgba(255,255,255,0.5); }
+  .footer-logo { font-size: 15px; font-weight: 600; letter-spacing: -0.02em; color: rgba(255,255,255,0.5); }
   .footer-copy { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text-dim); letter-spacing: 0.04em; }
-  .footer-links { display: flex; gap: 32px; }
-  .footer-links a { font-size: 12px; color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+  .footer-links { display: flex; gap: 28px; }
+  .footer-links a { font-size: 12px; color: var(--text-dim); text-decoration: none; transition: color 0.2s; cursor: none; }
   .footer-links a:hover { color: #fff; }
 
-  /* ── REVEAL ── */
-  .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  /* Reveal */
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.65s ease, transform 0.65s ease; }
   .reveal.visible { opacity: 1; transform: translateY(0); }
 
   @media (max-width: 900px) {
-    nav { padding: 20px 24px; }
-    .contact-hero { padding: 120px 24px 56px; }
-    .contact-body { grid-template-columns: 1fr; }
-    .contact-info { padding: 56px 24px; border-right: none; border-bottom: 1px solid var(--border); }
-    .contact-form-wrap { padding: 56px 24px; }
-    .form-grid { grid-template-columns: 1fr; }
-    .form-group.full { grid-column: span 1; }
-    .bento-mini-grid { grid-template-columns: 1fr 1fr; }
+    nav { padding: 18px 24px; }
+    .page { grid-template-columns: 1fr; }
+    .left-col { position: relative; top: 0; height: auto; padding: 60px 24px 56px; }
+    .right-col { padding: 56px 24px; }
+    .field-row { grid-template-columns: 1fr; }
     .form-footer { flex-direction: column; align-items: stretch; }
     .submit-btn { justify-content: center; }
     footer { flex-direction: column; gap: 20px; align-items: flex-start; }
@@ -337,7 +266,6 @@
 </head>
 <body>
 
-<div class="page-wrap">
 <div class="cursor" id="cursor"></div>
 <div class="cursor-ring" id="cursor-ring"></div>
 
@@ -345,128 +273,87 @@
 <nav>
   <a href="index.html" class="nav-logo">NORD<span>.AI</span></a>
   <div class="nav-right">
-    <a href="index.html" class="btn-outline">← Tillbaka</a>
-    <a href="mailto:hello@nord.ai" class="btn-solid">hello@nord.ai</a>
+    <a href="index.html" class="btn-ghost">← Tillbaka</a>
+    <a href="mailto:hello@nord.ai" class="btn-dark">hello@nord.ai</a>
   </div>
 </nav>
 
-<!-- HERO HEADER -->
-<section class="contact-hero">
-  <div class="hero-eyebrow reveal">Kontakt</div>
-  <h1 class="reveal">
-    Låt oss bygga<br>
-    <em>något</em> som<br>
-    håller.
-  </h1>
-  <div class="status-row reveal">
-    <span class="status-dot"></span>
-    Öppen för nya projekt — svarar inom 24 timmar
-  </div>
-</section>
+<div class="page">
 
-<!-- TICKER -->
-<div class="ticker-wrap">
-  <div class="ticker">
-    <span class="ticker-item">Boka ett gratis samtal</span>
-    <span class="ticker-item">Inga förpliktelser</span>
-    <span class="ticker-item">Svar inom 24 timmar</span>
-    <span class="ticker-item">Baserade i Stockholm</span>
-    <span class="ticker-item">Världsomspännande</span>
-    <span class="ticker-item">Boka ett gratis samtal</span>
-    <span class="ticker-item">Inga förpliktelser</span>
-    <span class="ticker-item">Svar inom 24 timmar</span>
-    <span class="ticker-item">Baserade i Stockholm</span>
-    <span class="ticker-item">Världsomspännande</span>
-  </div>
-</div>
-
-<!-- MAIN: INFO + FORM -->
-<div class="contact-body">
-
-  <!-- LEFT: info -->
-  <div class="contact-info">
-
-    <div class="info-block reveal">
-      <div class="info-label">Vad händer härnäst</div>
-      <div class="info-title">Från formulär till första möte</div>
-      <div class="info-body">
+  <!-- LEFT -->
+  <div class="left-col">
+    <div class="left-top">
+      <div class="eyebrow">Kontakt</div>
+      <h1 class="left-headline">
+        Låt oss<br>bygga<br><em>något</em><br>som håller.
+      </h1>
+      <p class="left-body">
         Vi granskar din förfrågan inom ett dygn och hör av oss för att boka ett kostnadsfritt 30-minuterssamtal. Inga säljpitchar — bara en ärlig konversation om ditt projekt.
-      </div>
+      </p>
     </div>
 
-    <div class="bento-mini-grid reveal">
-      <div class="bento-mini">
-        <div class="bento-mini-num">30min</div>
-        <div class="bento-mini-label">Kostnadsfritt första samtal</div>
+    <div>
+      <div class="meta-list">
+        <div class="meta-row">
+          <span class="meta-key">E-post</span>
+          <a href="mailto:hello@nord.ai" class="meta-link">hello@nord.ai</a>
+        </div>
+        <div class="meta-row">
+          <span class="meta-key">Plats</span>
+          <span class="meta-val">Stockholm, Sverige</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-key">Svarstid</span>
+          <span class="meta-val">Inom 24 timmar</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-key">Tillgänglighet</span>
+          <span class="meta-val">Öppen Q3 2025</span>
+        </div>
       </div>
-      <div class="bento-mini">
-        <div class="bento-mini-num">24h</div>
-        <div class="bento-mini-label">Svarstid på alla förfrågningar</div>
-      </div>
-      <div class="bento-mini">
-        <div class="bento-mini-num">48</div>
-        <div class="bento-mini-label">Projekt levererade sedan 2021</div>
-      </div>
-      <div class="bento-mini">
-        <div class="bento-mini-num">97%</div>
-        <div class="bento-mini-label">Kundlojalitet efter första projektet</div>
-      </div>
-    </div>
-
-    <div class="divider reveal"></div>
-
-    <div class="contact-details reveal">
-      <div class="contact-detail-row">
-        <span class="detail-key">E-post</span>
-        <a href="mailto:hello@nord.ai" class="info-link detail-val">hello@nord.ai</a>
-      </div>
-      <div class="contact-detail-row">
-        <span class="detail-key">Plats</span>
-        <span class="detail-val">Stockholm, Sverige</span>
-      </div>
-      <div class="contact-detail-row">
-        <span class="detail-key">Tillgänglighet</span>
-        <span class="detail-val">Öppen Q3 2025</span>
-      </div>
-      <div class="contact-detail-row">
-        <span class="detail-key">Tidszon</span>
-        <span class="detail-val">CET / CEST</span>
+      <div class="status-row">
+        <span class="status-dot"></span>
+        Öppen för nya projekt
       </div>
     </div>
-
   </div>
 
-  <!-- RIGHT: form -->
-  <div class="contact-form-wrap">
-    <div class="form-headline reveal">Boka ett gratis samtal</div>
-    <div class="form-sub reveal">Berätta om ditt projekt — vi hör av oss inom 24 timmar.</div>
+  <!-- RIGHT -->
+  <div class="right-col">
 
     <form id="contactForm" novalidate>
-      <div class="form-grid reveal">
 
-        <div class="form-group">
-          <label class="form-label" for="fname">Förnamn</label>
-          <input class="form-input" id="fname" name="fname" type="text" placeholder="Anna" required autocomplete="given-name">
+      <div class="form-block reveal">
+        <div class="form-section-label">Om dig</div>
+        <div class="field-row">
+          <div class="field">
+            <label class="field-label" for="fname">Förnamn</label>
+            <input class="field-input" id="fname" name="fname" type="text" placeholder="Anna" required autocomplete="given-name">
+          </div>
+          <div class="field">
+            <label class="field-label" for="lname">Efternamn</label>
+            <input class="field-input" id="lname" name="lname" type="text" placeholder="Lindström" required autocomplete="family-name">
+          </div>
         </div>
-
-        <div class="form-group">
-          <label class="form-label" for="lname">Efternamn</label>
-          <input class="form-input" id="lname" name="lname" type="text" placeholder="Lindström" required autocomplete="family-name">
+        <div class="field-row">
+          <div class="field">
+            <label class="field-label" for="email">E-post</label>
+            <input class="field-input" id="email" name="email" type="email" placeholder="anna@företag.se" required autocomplete="email">
+          </div>
+          <div class="field">
+            <label class="field-label" for="company">Företag</label>
+            <input class="field-input" id="company" name="company" type="text" placeholder="Ditt företag" autocomplete="organization">
+          </div>
         </div>
+      </div>
 
-        <div class="form-group">
-          <label class="form-label" for="email">E-postadress</label>
-          <input class="form-input" id="email" name="email" type="email" placeholder="anna@företag.se" required autocomplete="email">
-        </div>
+      <div class="form-divider"></div>
 
-        <div class="form-group">
-          <label class="form-label" for="company">Företag</label>
-          <input class="form-input" id="company" name="company" type="text" placeholder="Ditt företag" autocomplete="organization">
-        </div>
-
-        <div class="form-group full">
-          <label class="form-label" for="service">Vad behöver du hjälp med?</label>
-          <select class="form-select" id="service" name="service" required>
+      <div class="form-block reveal">
+        <div class="form-section-label">Om projektet</div>
+        <div class="field">
+          <label class="field-label" for="service">Vad behöver du hjälp med?</label>
+          <select class="field-select" id="service" name="service" required>
             <option value="" disabled selected>Välj en tjänst</option>
             <option value="ai-webb">AI-driven webbdesign</option>
             <option value="brand">Varumärkessystem</option>
@@ -475,10 +362,9 @@
             <option value="annat">Annat / Vet inte ännu</option>
           </select>
         </div>
-
-        <div class="form-group full">
-          <label class="form-label" for="budget">Budget (ungefärlig)</label>
-          <select class="form-select" id="budget" name="budget">
+        <div class="field">
+          <label class="field-label" for="budget">Budget (ungefärlig)</label>
+          <select class="field-select" id="budget" name="budget">
             <option value="" disabled selected>Välj budgetintervall</option>
             <option value="under-100k">Under 100 000 kr</option>
             <option value="100-250k">100 000 – 250 000 kr</option>
@@ -487,53 +373,52 @@
             <option value="diskutera">Vill diskutera</option>
           </select>
         </div>
-
-        <div class="form-group full">
-          <label class="form-label" for="message">Berätta om ditt projekt</label>
-          <textarea class="form-textarea" id="message" name="message" placeholder="Vad vill du bygga? Vilka utmaningar möter du? Vad är tidslinjerna?" required></textarea>
+        <div class="field">
+          <label class="field-label" for="message">Berätta om ditt projekt</label>
+          <textarea class="field-textarea" id="message" name="message" placeholder="Vad vill du bygga? Vilka utmaningar möter du? Vad är tidslinjerna?" required></textarea>
         </div>
-
-        <div class="form-group full">
-          <label class="form-label">Föredragna tider för samtal (CET)</label>
-          <div class="time-slots" id="timeSlots">
-            <div class="time-slot" data-time="mån 09–11">Mån 09–11</div>
-            <div class="time-slot" data-time="mån 13–15">Mån 13–15</div>
-            <div class="time-slot" data-time="tis 09–11">Tis 09–11</div>
-            <div class="time-slot" data-time="tis 14–16">Tis 14–16</div>
-            <div class="time-slot" data-time="ons 10–12">Ons 10–12</div>
-            <div class="time-slot" data-time="tor 09–11">Tor 09–11</div>
-            <div class="time-slot" data-time="tor 14–16">Tor 14–16</div>
-            <div class="time-slot" data-time="fre 09–11">Fre 09–11</div>
-            <div class="time-slot" data-time="flexibel">Flexibel</div>
-          </div>
-          <input type="hidden" id="selectedTimes" name="selectedTimes">
-        </div>
-
       </div>
 
-      <div class="form-footer">
+      <div class="form-divider"></div>
+
+      <div class="form-block reveal">
+        <div class="form-section-label">Föredragna tider (CET)</div>
+        <div class="time-grid" id="timeSlots">
+          <div class="time-slot" data-time="mån 09–11">Mån 09–11</div>
+          <div class="time-slot" data-time="mån 13–15">Mån 13–15</div>
+          <div class="time-slot" data-time="tis 09–11">Tis 09–11</div>
+          <div class="time-slot" data-time="tis 14–16">Tis 14–16</div>
+          <div class="time-slot" data-time="ons 10–12">Ons 10–12</div>
+          <div class="time-slot" data-time="tor 09–11">Tor 09–11</div>
+          <div class="time-slot" data-time="tor 14–16">Tor 14–16</div>
+          <div class="time-slot" data-time="fre 09–11">Fre 09–11</div>
+          <div class="time-slot" data-time="flexibel">Flexibel</div>
+        </div>
+        <input type="hidden" id="selectedTimes" name="selectedTimes">
+      </div>
+
+      <div class="form-footer reveal">
         <div class="form-note">
           Vi säljer aldrig dina uppgifter.<br>
           GDPR-kompatibel hantering.
         </div>
-        <button type="submit" class="submit-btn">
+        <button type="submit" class="submit-btn" id="submitBtn">
           Skicka förfrågan
-          <span class="submit-btn-arrow">↗</span>
+          <span class="submit-arrow">↗</span>
         </button>
       </div>
 
     </form>
 
-    <!-- Success message -->
     <div class="form-success" id="formSuccess">
       <div class="success-check">✓</div>
       <div class="success-title">Tack — vi hör av oss!</div>
       <div class="success-body">
-        Vi har tagit emot din förfrågan och återkommer inom 24 timmar för att boka in ert samtal. Kolla din inkorg på <span id="successEmail"></span>.
+        Vi har tagit emot din förfrågan och återkommer inom 24 timmar. Kolla din inkorg på <strong id="successEmail"></strong>.
       </div>
     </div>
-  </div>
 
+  </div>
 </div>
 
 <!-- FOOTER -->
@@ -546,110 +431,69 @@
     <a href="#">LinkedIn</a>
   </div>
 </footer>
-</div><!-- /page-wrap -->
 
 <script>
 // ── Cursor ──────────────────────────────────────────
 const cursor = document.getElementById('cursor');
 const ring   = document.getElementById('cursor-ring');
-let mx = 0, my = 0, rx = 0, ry = 0;
+let mx=0,my=0,rx=0,ry=0;
 document.addEventListener('mousemove', e => {
-  mx = e.clientX; my = e.clientY;
-  cursor.style.transform = `translate(${mx - 4}px, ${my - 4}px)`;
+  mx=e.clientX; my=e.clientY;
+  cursor.style.transform=`translate(${mx-4}px,${my-4}px)`;
 });
-function animateRing() {
-  rx += (mx - rx - 18) * 0.28;
-  ry += (my - ry - 18) * 0.28;
-  ring.style.transform = `translate(${rx}px, ${ry}px)`;
-  requestAnimationFrame(animateRing);
-}
-animateRing();
+(function loop(){
+  rx+=(mx-rx-18)*0.28; ry+=(my-ry-18)*0.28;
+  ring.style.transform=`translate(${rx}px,${ry}px)`;
+  requestAnimationFrame(loop);
+})();
 
-// ── Reveal on scroll ───────────────────────────────
-const reveals = document.querySelectorAll('.reveal');
+// ── Reveal ──────────────────────────────────────────
 const observer = new IntersectionObserver(entries => {
-  entries.forEach((e, i) => {
-    if (e.isIntersecting) {
-      const siblings = [...e.target.parentElement.querySelectorAll('.reveal')];
-      const idx = siblings.indexOf(e.target);
-      e.target.style.transitionDelay = `${idx * 55}ms`;
-      e.target.classList.add('visible');
-    }
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const siblings=[...e.target.parentElement.querySelectorAll('.reveal')];
+    e.target.style.transitionDelay=`${siblings.indexOf(e.target)*60}ms`;
+    e.target.classList.add('visible');
   });
-}, { threshold: 0.1 });
-reveals.forEach(el => observer.observe(el));
+},{ threshold:0.1 });
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
 
-// ── Time slot picker ───────────────────────────────
-const slots = document.querySelectorAll('.time-slot');
-const selectedTimes = document.getElementById('selectedTimes');
-const picked = new Set();
-slots.forEach(slot => {
-  slot.addEventListener('click', () => {
-    const t = slot.dataset.time;
-    if (picked.has(t)) { picked.delete(t); slot.classList.remove('selected'); }
-    else               { picked.add(t);    slot.classList.add('selected');    }
-    selectedTimes.value = [...picked].join(', ');
+// ── Time slots ──────────────────────────────────────
+const picked=new Set();
+document.querySelectorAll('.time-slot').forEach(slot=>{
+  slot.addEventListener('click',()=>{
+    const t=slot.dataset.time;
+    if(picked.has(t)){picked.delete(t);slot.classList.remove('selected');}
+    else{picked.add(t);slot.classList.add('selected');}
+    document.getElementById('selectedTimes').value=[...picked].join(', ');
   });
 });
 
-// ── Form submission ────────────────────────────────
-const form    = document.getElementById('contactForm');
-const success = document.getElementById('formSuccess');
-const submitBtn = form.querySelector('.submit-btn');
-
-form.addEventListener('submit', async e => {
+// ── Form submit ──────────────────────────────────────
+const form=document.getElementById('contactForm');
+const submitBtn=document.getElementById('submitBtn');
+form.addEventListener('submit', async e=>{
   e.preventDefault();
-  if (!form.checkValidity()) { form.reportValidity(); return; }
-
-  // Animate button
-  submitBtn.textContent = 'Skickar…';
-  submitBtn.disabled = true;
-
-  const data = {
-    fname:   form.fname.value.trim(),
-    lname:   form.lname.value.trim(),
-    email:   form.email.value.trim(),
-    company: form.company.value.trim(),
-    service: form.service.value,
-    budget:  form.budget.value,
-    message: form.message.value.trim(),
-    times:   selectedTimes.value || 'Ej angivet',
-  };
-
-  // Send via Formspree (replace YOUR_FORM_ID with actual Formspree endpoint)
-  try {
-    const res = await fetch('https://formspree.io/f/YOUR_FORM_ID', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({
-        name:    `${data.fname} ${data.lname}`,
-        email:   data.email,
-        company: data.company,
-        service: data.service,
-        budget:  data.budget,
-        message: data.message,
-        times:   data.times,
-      }),
+  if(!form.checkValidity()){form.reportValidity();return;}
+  submitBtn.textContent='Skickar…'; submitBtn.disabled=true;
+  const email=form.email.value.trim();
+  try{
+    const res=await fetch('https://formspree.io/f/YOUR_FORM_ID',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({
+        name:`${form.fname.value} ${form.lname.value}`,
+        email, company:form.company.value,
+        service:form.service.value, budget:form.budget.value,
+        message:form.message.value,
+        times:document.getElementById('selectedTimes').value||'Ej angivet'
+      })
     });
-
-    if (res.ok) {
-      // Show success
-      form.style.display = 'none';
-      document.querySelector('.form-headline').style.display = 'none';
-      document.querySelector('.form-sub').style.display = 'none';
-      document.getElementById('successEmail').textContent = data.email;
-      success.style.display = 'flex';
-    } else {
-      throw new Error('Server error');
-    }
-  } catch {
-    // Fallback — show success anyway for demo (replace with real error handling)
-    form.style.display = 'none';
-    document.querySelector('.form-headline').style.display = 'none';
-    document.querySelector('.form-sub').style.display = 'none';
-    document.getElementById('successEmail').textContent = data.email;
-    success.style.display = 'flex';
-  }
+    if(!res.ok) throw new Error();
+  }catch{}
+  form.style.display='none';
+  document.getElementById('successEmail').textContent=email;
+  document.getElementById('formSuccess').style.display='flex';
 });
 </script>
 </body>
