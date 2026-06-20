@@ -243,6 +243,35 @@
     color: var(--mid-grey);
   }
 
+  /* Typewriter rotating word */
+  .tw-word {
+    font-style: normal;
+    color: var(--mid-grey);
+    position: relative;
+    white-space: nowrap;
+  }
+  .tw-char {
+    transition: background-color 0.15s ease, color 0.15s ease;
+    border-radius: 2px;
+  }
+  .tw-char.tw-selected {
+    background-color: rgba(125, 168, 224, 0.55);
+    color: #ffffff;
+  }
+  .tw-cursor {
+    display: inline-block;
+    width: 3px;
+    margin-left: 2px;
+    background: var(--mid-grey);
+    animation: tw-blink 0.9s steps(1) infinite;
+    vertical-align: -0.08em;
+  }
+  @keyframes tw-blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+  .tw-cursor.tw-static { animation: none; opacity: 1; }
+
   .hero-bottom {
     display: flex; align-items: flex-end; justify-content: space-between;
   }
@@ -831,7 +860,7 @@
       </div>
       <h1 class="hero-headline reveal">
         Intelligenta<br>
-        <em>webbplatser</em> som<br>
+        <span class="tw-word" id="twWord"><span id="twChars"></span><span class="tw-cursor" id="twCursor" style="height:0.78em;"></span></span> som<br>
         konverterar.
       </h1>
       <div class="hero-bottom reveal">
@@ -1577,6 +1606,88 @@ reveals.forEach(el => observer.observe(el));
     buildDots();
     goTo(current);
   });
+})();
+
+// ── Typewriter rotating word ───────────────────────
+(function () {
+  const words = ['webbplatser', 'landningssidor', 'appar', 'plugins', 'UX/UI'];
+  const charsEl  = document.getElementById('twChars');
+  const cursorEl = document.getElementById('twCursor');
+  if (!charsEl || !cursorEl) return;
+
+  let wordIndex = 0;
+
+  const TYPE_SPEED   = 75;   // ms per character while typing
+  const PAUSE_AFTER_TYPE = 700;   // pause once word is fully typed
+  const BLINK_DURATION   = 600;   // how long cursor blinks (2x) before selecting
+  const SELECT_HOLD      = 550;   // how long the blue selection stays visible
+  const ERASE_SPEED       = 35;   // ms per character while erasing (smooth, fast)
+  const PAUSE_AFTER_ERASE = 250;  // pause before next word starts typing
+
+  function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
+
+  function renderChars(word, count) {
+    let html = '';
+    for (let i = 0; i < count; i++) {
+      const ch = word[i] === ' ' ? '&nbsp;' : word[i];
+      html += `<span class="tw-char">${ch}</span>`;
+    }
+    charsEl.innerHTML = html;
+  }
+
+  function setSelected(selected) {
+    const spans = charsEl.querySelectorAll('.tw-char');
+    spans.forEach(s => s.classList.toggle('tw-selected', selected));
+  }
+
+  async function typeWord(word) {
+    cursorEl.classList.remove('tw-static');
+    for (let i = 1; i <= word.length; i++) {
+      renderChars(word, i);
+      await sleep(TYPE_SPEED + Math.random() * 35); // slight human jitter
+    }
+  }
+
+  async function blinkTwice() {
+    // Force two clean blink cycles, then hold cursor solid
+    cursorEl.classList.remove('tw-static');
+    cursorEl.style.animation = 'none';
+    void cursorEl.offsetWidth; // reflow to restart animation
+    cursorEl.style.animation = '';
+    await sleep(BLINK_DURATION * 2);
+  }
+
+  async function selectWord() {
+    cursorEl.classList.add('tw-static');
+    cursorEl.style.opacity = '0';
+    setSelected(true);
+    await sleep(SELECT_HOLD);
+  }
+
+  async function eraseWord(word) {
+    for (let i = word.length; i >= 0; i--) {
+      renderChars(word, i);
+      setSelected(false);
+      await sleep(ERASE_SPEED);
+    }
+    cursorEl.classList.remove('tw-static');
+    cursorEl.style.opacity = '';
+  }
+
+  async function loop() {
+    while (true) {
+      const word = words[wordIndex % words.length];
+      await typeWord(word);
+      await sleep(PAUSE_AFTER_TYPE);
+      await blinkTwice();
+      await selectWord();
+      await eraseWord(word);
+      await sleep(PAUSE_AFTER_ERASE);
+      wordIndex++;
+    }
+  }
+
+  loop();
 })();
 
 // ── FAQ toggle ──────────────────────────────────────
