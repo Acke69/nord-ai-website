@@ -1617,12 +1617,12 @@ reveals.forEach(el => observer.observe(el));
 
   let wordIndex = 0;
 
-  const TYPE_SPEED   = 75;   // ms per character while typing
-  const PAUSE_AFTER_TYPE = 700;   // pause once word is fully typed
-  const BLINK_DURATION   = 600;   // how long cursor blinks (2x) before selecting
-  const SELECT_HOLD      = 550;   // how long the blue selection stays visible
-  const ERASE_SPEED       = 35;   // ms per character while erasing (smooth, fast)
-  const PAUSE_AFTER_ERASE = 250;  // pause before next word starts typing
+  const TYPE_SPEED   = 115;  // ms per character while typing
+  const PAUSE_AFTER_TYPE = 1100;  // pause once word is fully typed
+  const BLINK_DURATION   = 900;   // how long cursor blinks (2x) before selecting
+  const SELECT_HOLD      = 850;   // how long the blue selection stays visible
+  const ERASE_SPEED       = 55;   // ms per character while erasing (smooth, fast)
+  const PAUSE_AFTER_ERASE = 450;  // pause before next word starts typing
 
   function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
 
