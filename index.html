@@ -677,15 +677,27 @@
     padding: 120px 48px;
     max-width: 1280px;
     margin: 0 auto;
-    display: flex; align-items: flex-end; justify-content: space-between;
-    gap: 40px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 60px;
+  }
+  .contact-left {
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    flex: 1;
+  }
+  .contact-eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--text-dim-dark);
+    text-transform: uppercase;
+    margin-bottom: 24px;
   }
   .contact-headline {
     font-size: clamp(44px, 5.5vw, 80px);
     font-weight: 500;
     letter-spacing: -0.04em;
     line-height: 1.0;
-    max-width: 600px;
+    text-align: center;
   }
   .contact-headline em { font-style: normal; color: var(--mid-grey); }
   .contact-right {
@@ -1111,11 +1123,14 @@
 <!-- CONTACT -->
 <section class="contact-section" id="contact">
   <div class="contact-inner">
-    <h2 class="contact-headline reveal">
-      Redo att bygga<br>
-      <em>något</em><br>
-      som håller?
-    </h2>
+    <div class="contact-left reveal">
+      <p class="contact-eyebrow">Kontakta oss</p>
+      <h2 class="contact-headline">
+        Redo att bygga<br>
+        <em>något</em><br>
+        som håller?
+      </h2>
+    </div>
     <div class="contact-right reveal">
       <div class="contact-form-field">
         <label>Namn</label>
